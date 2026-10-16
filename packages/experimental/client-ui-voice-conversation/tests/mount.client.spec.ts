@@ -142,7 +142,7 @@ describe('mountVoiceConversation', () => {
       expect(b.ctx.slots.entries('conversation.input.activity')).toHaveLength(0)
       expect(b.ctx.slots.entries('plugins.bundle.config')).toHaveLength(0)
       expect(b.ctx.slots.entries('plugins.bundle.activation')).toHaveLength(0)
-      for (const unmount of b.unmounts) expect(unmount).toHaveBeenCalledOnce()
+      for (const unmount of b.unmounts) expect(unmount).toHaveBeenCalledTimes(unmount === b.unmounts[1] ? 1 : 0)
     } finally {
       await b.ctx.fiber.dispose()
     }

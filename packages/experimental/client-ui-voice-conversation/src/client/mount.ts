@@ -19,7 +19,16 @@ import { createMicrophoneDeviceStore } from './microphone-device.ts'
 import { en, NS, zh } from './locales.ts'
 import { observeCatalog, type SpeechReadiness, type TtsReadiness } from './readiness.ts'
 
-export const inject = ['remote', 'remote.speech', 'remote.tts', 'slots', 'locale', 'sessions', 'pluginNavigation']
+/**
+ * Base Client services needed before this plugin activates.
+ * `remote.speech` arrives from the voice-input bundle; this bundle only owns
+ * the `tts` namespace, so `remote.tts` is deliberately absent here — it
+ * becomes available below via `ctx.remote.$mount(ttsContribution)`.
+ */
+export const inject = ['remote', 'remote.speech', 'slots', 'locale', 'sessions', 'pluginNavigation']
+
+/** The only namespace voice-conversation mounts itself. */
+const uiInject = ['remote.tts']
 
 /** Resolve or create the one voice loop bound to one Session. */
 function controllerFor(
@@ -99,8 +108,10 @@ function registerUi(ctx: Context): void {
     selectMicrophone: (device) => { microphone.set(device) },
   }
 
+  // Shadow voice-input's mic-button UI with the full always-on conversation loop.
   ctx.slots.inject('conversation.input.activity', () => ctx.slots.register({
     name: 'conversation.input.activity',
+    priority: -1,
     locale: NS,
     inject: (sessionId): VoiceConversationInjected => {
       const { binding, controller } = controllerFor(sessions, sessionId, controllers, ctx, speech.state, tts.state)
@@ -148,23 +159,22 @@ function registerUi(ctx: Context): void {
  */
 export async function mountVoiceConversation(
   ctx: Context,
-  speechContribution: TypertRemoteContribution,
+  _speechContribution: TypertRemoteContribution,
   ttsContribution: TypertRemoteContribution,
 ): Promise<() => Promise<void>> {
-  const disposeSpeech = await ctx.remote.$mount(speechContribution)
+  // speech namespace is owned by voice-input bundle; top-level inject
+  // ['remote.speech', ...] guarantees it is mounted before we activate.
   const disposeTts = await ctx.remote.$mount(ttsContribution)
-  const ui = ctx.inject(inject, registerUi)
+  const ui = ctx.inject([...inject, ...uiInject], registerUi)
   try {
     await ui
   } catch (error) {
     await ui.dispose()
     await disposeTts()
-    await disposeSpeech()
     throw error
   }
   return async () => {
     await ui.dispose()
     await disposeTts()
-    await disposeSpeech()
   }
 }

@@ -706,6 +706,12 @@ importers:
       '@deepseek-ai/dsh-deepseek-account':
         specifier: workspace:*
         version: link:../../packages/credentials/deepseek-account
+      '@deepseek-ai/dsh-experimental-voice-conversation-bundle':
+        specifier: workspace:*
+        version: link:../../packages/experimental/voice-conversation-bundle
+      '@deepseek-ai/dsh-experimental-voice-input-bundle':
+        specifier: workspace:*
+        version: link:../../packages/experimental/voice-input-bundle
       '@deepseek-ai/dsh-home-paths':
         specifier: workspace:*
         version: link:../../packages/util/home-paths
