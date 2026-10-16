@@ -192,6 +192,12 @@ const packageFileExtras: Readonly<Record<string, readonly string[]>> = {
   // The CPython side ships as source .py files, published as-is rather than built.
   '@deepseek-ai/dsh-experimental-ptc-runtime-python': ['py/**/*.py'],
   '@deepseek-ai/dsh-experimental-speech-to-text-sensevoice': ['runtime/assets.json'],
+  // The Kokoro provider ships the same managed-download assets manifest as
+  // the SenseVoice provider.
+  '@deepseek-ai/dsh-experimental-text-to-speech-kokoro': ['runtime/assets.json'],
+  // The pure WAV-encoding channel other client bundles inline through
+  // INLINE_SAFE is also a published package subpath for plain Node callers.
+  '@deepseek-ai/dsh-experimental-client-ui-voice-input': ['lib/audio.js'],
   // Node execution modes each launch a separately bundled bootstrap.
   '@deepseek-ai/dsh-ptc-runtime-node': ['lib/process.js', 'lib/persistent-process.js'],
   // The Inspector owns a Worker and a mirrored frontend outside package export paths.

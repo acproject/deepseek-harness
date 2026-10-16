@@ -1,0 +1,48 @@
+{
+  "archives": {
+    "int8": {
+      "name": "kokoro-int8-multi-lang-v1_0.tar.bz2",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2",
+      "bytes": 132303094,
+      "sha256": "4c3052abaa60943a341f193888cf6abd68787dae6ab8ae5c925a706caa247e4e"
+    },
+    "fp32": {
+      "name": "kokoro-multi-lang-v1_0.tar.bz2",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2",
+      "bytes": 349906910,
+      "sha256": "c5f7e2d2caf082bc1d20fb70334a61d99d20b484500aad32e7cf84c128ea3298"
+    }
+  },
+  "files": {
+    "modelInt8": {
+      "name": "model.int8.onnx",
+      "bytes": 114203756,
+      "sha256": "4b86207ef680e394d8343bee22dfc4c512e5c707c6d9578e3f35ab09bffd6b36"
+    },
+    "modelFp32": {
+      "name": "model.onnx",
+      "bytes": 325560556,
+      "sha256": "b40f62b166ac8164b0627ef48a0b358eda0985e272fb03ef5252e7206305da11"
+    },
+    "voices": {
+      "name": "voices.bin",
+      "bytes": 28200960,
+      "sha256": "1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29"
+    },
+    "tokens": {
+      "name": "tokens.txt",
+      "bytes": 687,
+      "sha256": "6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425"
+    },
+    "lexiconEn": {
+      "name": "lexicon-us-en.txt",
+      "bytes": 5956885,
+      "sha256": "7daaab53a181be9885b853a8582bf1838186317e5dadacbcef9c426d6fa0da14"
+    },
+    "lexiconZh": {
+      "name": "lexicon-zh.txt",
+      "bytes": 2365182,
+      "sha256": "902bc2d20ac7c449c5ecbbbb23c89d12119c03ed5b8ed27f114f0260c9e35229"
+    }
+  }
+}

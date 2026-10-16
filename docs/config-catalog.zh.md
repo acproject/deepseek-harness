@@ -875,6 +875,25 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-experimental-api-speech-to-text -->
 
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-experimental-api-text-to-speech -->
+<a id="deepseek-aidsh-experimental-api-text-to-speech"></a>
+
+## `@deepseek-ai/dsh-experimental-api-text-to-speech`
+
+- `inject`: `textToSpeech` · `typert`
+- `source`: [`packages/experimental/api-text-to-speech/src/index.ts:20`](../packages/experimental/api-text-to-speech/src/index.ts)
+
+```ts config-catalog
+/** Limits applied before resolution or calling a provider. */
+export interface Config {
+  /** Maximum request text length in Unicode code points. */
+  maxTextChars: number
+  /** Maximum returned WAV bytes. */
+  maxAudioBytes: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-experimental-api-text-to-speech -->
+
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-experimental-browser-use-chrome-devtools-mcp -->
 <a id="deepseek-aidsh-experimental-browser-use-chrome-devtools-mcp"></a>
 
@@ -1258,6 +1277,80 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-experimental-speech-to-text-sensevoice -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-experimental-text-to-speech -->
+<a id="deepseek-aidsh-experimental-text-to-speech"></a>
+
+## `@deepseek-ai/dsh-experimental-text-to-speech`
+
+- `refs`: `Volatile` (`@deepseek-ai/cordis`)
+- `source`: [`packages/experimental/text-to-speech/src/index.ts:20`](../packages/experimental/text-to-speech/src/index.ts)
+
+```ts config-catalog
+/** Live selection read before synthesis starts; `configure()` writes it through the profile. */
+export interface Config {
+  /** Registered provider selected when the caller omits an id. */
+  defaultProvider: Volatile<string>
+  /** Registered voice id selected when the caller omits one. */
+  defaultVoice: Volatile<string>
+  /** Provider language hint selected when the caller omits one. */
+  language: Volatile<string>
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-experimental-text-to-speech -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-experimental-text-to-speech-kokoro -->
+<a id="deepseek-aidsh-experimental-text-to-speech-kokoro"></a>
+
+## `@deepseek-ai/dsh-experimental-text-to-speech-kokoro`
+
+- `inject`: `textToSpeech` · `subprocess`
+- `source`: [`packages/experimental/text-to-speech-kokoro/src/config.ts:6`](../packages/experimental/text-to-speech-kokoro/src/config.ts)
+
+```ts config-catalog
+/** Local runtime, synthesis, and retention settings. */
+export interface Config {
+  /** Unique registration id; consumers select this exact id. */
+  providerId: string
+  /** Absolute directory for the verified archive, extracted models and process runtime. */
+  dataRoot: string
+  /** Existing extracted-model directory; omission downloads and verifies an archive. */
+  modelDirectory?: string | undefined
+  /** Weight precision; INT8 minimizes first-use download and model storage. */
+  precision: 'int8' | 'fp32'
+  /** Playback rate passed to Kokoro; 1 is natural speed. */
+  speed: number
+  /** CPU intra-operation thread count. */
+  threads: number
+  /** Explicit release origin; bypasses automatic selection and fallback. */
+  modelOrigin?: string | undefined
+  /** Release origins compared before downloading the model archive. */
+  modelOrigins: string[]
+  /** Deadline for concurrent HEAD probes, including redirects to the archive. */
+  modelProbeTimeoutMs: number
+  /** Maximum request text length measured in Unicode code points. */
+  maxTextChars: number
+  /** Maximum produced WAV bytes accepted from the private worker. */
+  maxAudioBytes: number
+  /** Deadline for archive download, extraction and cold model loading. */
+  prepareTimeoutMs: number
+  /** Deadline for one synthesis after the worker is ready. */
+  synthesisTimeoutMs: number
+  /** Idle period before stopping the worker; zero keeps it warm. */
+  idleTimeoutMs: number
+  /** Maximum accepted running and waiting syntheses. */
+  maxPending: number
+  /** Managed process termination grace period. */
+  graceMs: number
+  /** Maximum retained worker diagnostic bytes. */
+  maxLogBytes: number
+  /** Maximum audio response bytes, including response headers allowance. */
+  maxResponseBytes: number
+  /** Minimum interval between intermediate download progress notifications. */
+  progressIntervalMs: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-experimental-text-to-speech-kokoro -->
 
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-experimental-tool-agent-team -->
 <a id="deepseek-aidsh-experimental-tool-agent-team"></a>
@@ -4605,6 +4698,7 @@ export interface Config {
 | `@deepseek-ai/dsh-experimental-auto-review` | `approval` · `llm` · `permissionPresets` · `sessions` · `tools` · `workingDirectory` | [`packages/experimental/auto-review/src/index.ts`](../packages/experimental/auto-review/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-client-ui-agent-team` | — | [`packages/experimental/client-ui-agent-team/src/index.ts`](../packages/experimental/client-ui-agent-team/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-client-ui-claude-code-mods` | — | [`packages/experimental/client-ui-claude-code-mods/src/index.ts`](../packages/experimental/client-ui-claude-code-mods/src/index.ts) |
+| `@deepseek-ai/dsh-experimental-client-ui-voice-conversation` | — | [`packages/experimental/client-ui-voice-conversation/src/index.ts`](../packages/experimental/client-ui-voice-conversation/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-client-ui-voice-input` | — | [`packages/experimental/client-ui-voice-input/src/index.ts`](../packages/experimental/client-ui-voice-input/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-computer-use-cua-driver-native` | `computerUse` · `tools` · `systemPrompt` | [`packages/experimental/computer-use-cua-driver-native/src/index.ts`](../packages/experimental/computer-use-cua-driver-native/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-session-inspector` | — | [`packages/experimental/session-inspector/src/index.ts`](../packages/experimental/session-inspector/src/index.ts) |
@@ -4699,6 +4793,7 @@ export interface Config {
 | `@deepseek-ai/dsh-experimental-session-search` | — | [`packages/experimental/session-search/src/index.ts`](../packages/experimental/session-search/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-session-titles-bundle` | — | [`packages/experimental/session-titles-bundle/src/index.ts`](../packages/experimental/session-titles-bundle/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-terminal-bundle` | — | [`packages/experimental/terminal-bundle/src/index.ts`](../packages/experimental/terminal-bundle/src/index.ts) |
+| `@deepseek-ai/dsh-experimental-voice-conversation-bundle` | — | [`packages/experimental/voice-conversation-bundle/src/index.ts`](../packages/experimental/voice-conversation-bundle/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-voice-input-bundle` | — | [`packages/experimental/voice-input-bundle/src/index.ts`](../packages/experimental/voice-input-bundle/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-webworker-packer` | — | [`packages/experimental/webworker-packer/src/index.ts`](../packages/experimental/webworker-packer/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-webworker-runtime` | — | [`packages/experimental/webworker-runtime/src/index.ts`](../packages/experimental/webworker-runtime/src/index.ts) |

@@ -279,6 +279,13 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Validates bounded browser audio before provider dispatch.',
   },
   {
+    key: 'ttsController',
+    pkg: 'experimental-api-text-to-speech',
+    title: 'Experimental synthesis Remote',
+    mode: 'core',
+    note: 'Validates bounded text and synthesized audio around provider dispatch.',
+  },
+  {
     key: 'sessionController',
     pkg: 'api-session-controller',
     title: 'Host Session Remote controller',
@@ -773,6 +780,15 @@ const SERVICE_ROLES: ServiceRole[] = [
     implementations: ['experimental-speech-to-text-sensevoice'],
     consumers: ['experimental-api-speech-to-text'],
     note: 'Routes explicit recognizers; the browser uses the authenticated Remote and keeps transcripts in the draft until submission.',
+  },
+  {
+    key: 'textToSpeech',
+    pkg: 'experimental-text-to-speech',
+    title: 'Experimental speech synthesis providers',
+    mode: 'seam',
+    implementations: ['experimental-text-to-speech-kokoro'],
+    consumers: ['experimental-api-text-to-speech'],
+    note: 'Selects one local synthesizer; the browser follows sentence playback through the authenticated Remote and never logs audio.',
   },
   {
     key: 'agentTeams',

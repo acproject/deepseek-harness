@@ -1,0 +1,25 @@
+- insert:
+    - id: speech-to-text
+      name: '@deepseek-ai/dsh-experimental-speech-to-text'
+      config:
+        defaultProvider: sensevoice-local
+    - id: speech-to-text-sensevoice
+      name: '@deepseek-ai/dsh-experimental-speech-to-text-sensevoice'
+      config:
+        dataRoot: !!js dshHomePath('speech-to-text', 'sensevoice')
+    - id: api-speech-to-text
+      name: '@deepseek-ai/dsh-experimental-api-speech-to-text'
+    - id: text-to-speech
+      name: '@deepseek-ai/dsh-experimental-text-to-speech'
+      config:
+        defaultProvider: kokoro-local
+        defaultVoice: zf_xiaobei
+        language: auto
+    - id: text-to-speech-kokoro
+      name: '@deepseek-ai/dsh-experimental-text-to-speech-kokoro'
+      config:
+        dataRoot: !!js dshHomePath('text-to-speech', 'kokoro')
+    - id: api-text-to-speech
+      name: '@deepseek-ai/dsh-experimental-api-text-to-speech'
+    - id: ui-voice-conversation
+      name: '@deepseek-ai/dsh-experimental-client-ui-voice-conversation'

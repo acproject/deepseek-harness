@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Voice conversation",
+    "description": "Talk with the agent hands-free: local SenseVoice transcription and local Kokoro speech; first use requires installing dependencies"
+  }
+}

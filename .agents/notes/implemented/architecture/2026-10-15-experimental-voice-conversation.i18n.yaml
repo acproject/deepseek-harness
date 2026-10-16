@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-10-15-experimental-voice-conversation.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-10-15-experimental-voice-conversation.md
+/agent-note-experimental-always-on-voice-conversation-with-local-synthesis:
+  en: 88573a6489d02947
+  zh: 7cb399395b5146ce
+/agent-note-experimental-always-on-voice-conversation-with-local-synthesis/problem:
+  en: 2bca0385f1559a8e
+  zh: b02416c1fc07a7c2
+/agent-note-experimental-always-on-voice-conversation-with-local-synthesis/decision:
+  en: ae22e23dd0a32605
+  zh: 8467dc8176b73cbb
+/agent-note-experimental-always-on-voice-conversation-with-local-synthesis/alternatives-considered:
+  en: 03c9f9196ed5d89b
+  zh: 213b9cc0c8812c20
+/agent-note-experimental-always-on-voice-conversation-with-local-synthesis/consequences:
+  en: 8fe1b0919c233cc8
+  zh: a18c4b74ce5ef1fa

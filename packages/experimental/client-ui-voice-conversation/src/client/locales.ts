@@ -1,0 +1,123 @@
+/** Locale-owned copy for the experimental always-on voice conversation. */
+import type {} from '@deepseek-ai/dsh-client-ui-slots'
+
+/** Dictionary namespace for every voice-conversation control. */
+export const NS = 'voice-conversation'
+
+/** Chinese dictionary and key source. */
+export const zh = {
+  start: '开始语音对话',
+  stop: '结束语音对话',
+  starting: '正在启动…',
+  'phase.off': '语音对话已关闭',
+  'phase.starting': '正在启动语音…',
+  'phase.calibrating': '正在校准环境噪声…',
+  'phase.listening': '正在聆听',
+  'phase.hearing': '听到语音',
+  'phase.transcribing': '正在识别…',
+  'phase.thinking': '思考中…',
+  'phase.speaking': '正在朗读回答…',
+  speakerWarning: '未检测到耳机。外放的回答可能被识别为新的提问，建议佩戴耳机使用。',
+  'error.not-ready': '语音识别或合成服务尚未就绪，请先在插件详情中完成准备。',
+  'error.capture-unavailable': '当前浏览器不支持麦克风录音，请使用支持麦克风的浏览器。',
+  'error.capture-permission': '麦克风权限未开启，请在浏览器和系统设置中允许访问。',
+  'error.capture-device-missing': '麦克风不可用，请检查输入设备后重试。',
+  'error.capture-interrupted': '麦克风被中断，请重新开始语音对话。',
+  'error.transcribe-failed': '语音识别失败，请重试。',
+  'error.synthesize-failed': '语音合成失败，请重试。',
+  'error.submit-failed': '提交失败，请重试。',
+  'setupPrompt.title': '使用语音对话前需要安装',
+  'setupPrompt.body': '语音对话插件已开启。首次使用需要在本机下载并准备语音识别与语音合成模型，请前往插件详情页查看空间、内存和时间说明，再开始安装。',
+  'setupPrompt.later': '稍后',
+  'setupPrompt.open': '前往安装',
+  'config.title': '语音对话',
+  'config.speech': '语音识别',
+  'config.tts': '语音合成',
+  'config.microphone': '麦克风',
+  provider: '服务',
+  voice: '发音人',
+  language: '语言',
+  prepare: '下载并准备',
+  cancelPrepare: '取消准备',
+  preparing: '准备中…',
+  reconnecting: '正在连接语音服务…',
+  'preparation.unprepared': '首次使用需要下载本地模型。',
+  'preparation.downloading': '正在下载模型…',
+  'preparation.checking': '正在检查本地资源…',
+  'preparation.loading': '正在加载模型…',
+  'preparation.waking': '正在唤醒本地语音…',
+  'preparation.ready': '已就绪。',
+  'preparation.standby': '资源已准备，使用时自动唤醒。',
+  'preparation.cancelled': '准备已取消，已完成的下载会保留。',
+  'preparation.cancelling': '正在取消准备…',
+  'preparation.failed': '准备失败',
+  systemMicrophone: '系统默认',
+  unnamedMicrophone: '麦克风 {number}',
+  auto: '自动检测',
+  zh: '中文',
+  en: '英语',
+} as const
+
+/** Keys accepted by the voice-conversation translator. */
+export type VoiceConversationKey = keyof typeof zh
+
+/** English dictionary with the same complete key set. */
+export const en: Record<VoiceConversationKey, string> = {
+  start: 'Start voice conversation',
+  stop: 'Stop voice conversation',
+  starting: 'Starting…',
+  'phase.off': 'Voice conversation off',
+  'phase.starting': 'Starting voice…',
+  'phase.calibrating': 'Calibrating ambient noise…',
+  'phase.listening': 'Listening',
+  'phase.hearing': 'Hearing speech',
+  'phase.transcribing': 'Transcribing…',
+  'phase.thinking': 'Thinking…',
+  'phase.speaking': 'Speaking the answer…',
+  speakerWarning: 'No headphones detected. Spoken answers from speakers may be picked up as new questions. Headphones are recommended.',
+  'error.not-ready': 'Speech recognition or synthesis is not ready. Finish preparation in the plugin details first.',
+  'error.capture-unavailable': 'This browser cannot record audio. Use a browser with microphone support.',
+  'error.capture-permission': 'Microphone access is disabled. Allow it in browser and system settings.',
+  'error.capture-device-missing': 'The microphone is unavailable. Check the input device and try again.',
+  'error.capture-interrupted': 'The microphone was interrupted. Start the voice conversation again.',
+  'error.transcribe-failed': 'Speech recognition failed. Please try again.',
+  'error.synthesize-failed': 'Speech synthesis failed. Please try again.',
+  'error.submit-failed': 'Submission failed. Please try again.',
+  'setupPrompt.title': 'Set up voice conversation before starting',
+  'setupPrompt.body': 'Voice conversation is enabled. First use requires downloading and preparing local speech recognition and synthesis models. Open the plugin details to review disk space, memory and time estimates before starting setup.',
+  'setupPrompt.later': 'Later',
+  'setupPrompt.open': 'Go to setup',
+  'config.title': 'Voice conversation',
+  'config.speech': 'Speech recognition',
+  'config.tts': 'Speech synthesis',
+  'config.microphone': 'Microphone',
+  provider: 'Service',
+  voice: 'Voice',
+  language: 'Language',
+  prepare: 'Download and prepare',
+  cancelPrepare: 'Cancel preparation',
+  preparing: 'Preparing…',
+  reconnecting: 'Connecting to voice services…',
+  'preparation.unprepared': 'First use downloads local models.',
+  'preparation.downloading': 'Downloading models…',
+  'preparation.checking': 'Checking local resources…',
+  'preparation.loading': 'Loading models…',
+  'preparation.waking': 'Waking local voice…',
+  'preparation.ready': 'Ready.',
+  'preparation.standby': 'Resources are prepared and wake on use.',
+  'preparation.cancelled': 'Preparation cancelled. Completed downloads are retained.',
+  'preparation.cancelling': 'Cancelling preparation…',
+  'preparation.failed': 'Preparation failed',
+  systemMicrophone: 'System default',
+  unnamedMicrophone: 'Microphone {number}',
+  auto: 'Detect automatically',
+  zh: 'Chinese',
+  en: 'English',
+}
+
+declare module '@deepseek-ai/dsh-client-ui-slots' {
+  interface LocaleNamespaceMap {
+    /** Always-on voice conversation activity and preparation copy. */
+    'voice-conversation': VoiceConversationKey
+  }
+}

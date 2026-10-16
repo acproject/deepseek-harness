@@ -1,0 +1,18 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dsh_voice_conversation_grad" x1="7" y1="8" x2="29" y2="29.5" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67C7FE" />
+      <stop offset="1" stop-color="#3F77D8" />
+    </linearGradient>
+    <mask id="dsh_voice_conversation_cut" maskUnits="userSpaceOnUse" x="0" y="0" width="36" height="36">
+      <rect x="0" y="0" width="36" height="36" fill="white" />
+      <rect x="12" y="12" width="2.4" height="7" rx="1.2" fill="black" />
+      <rect x="16.8" y="10" width="2.4" height="11" rx="1.2" fill="black" />
+      <rect x="21.6" y="12" width="2.4" height="7" rx="1.2" fill="black" />
+    </mask>
+  </defs>
+  <g mask="url(#dsh_voice_conversation_cut)" fill="url(#dsh_voice_conversation_grad)">
+    <rect x="7" y="7" width="22" height="17" rx="6" />
+    <path d="M10.5 24 L8.5 29.5 L17 24 Z" />
+  </g>
+</svg>

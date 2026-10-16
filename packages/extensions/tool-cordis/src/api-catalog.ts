@@ -3292,6 +3292,66 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'textToSpeech',
+    summary: 'Registry shared by all synthesis consumers in one Host composition.',
+    description: 'Registry shared by all synthesis consumers in one Host composition.',
+    methods: [
+      {
+        signature: 'register(provider: SynthesisProvider): () => Promise<void>',
+        description: 'Register one synthesizer; duplicate ids fail without replacing the original.',
+        parameters: [{ name: 'provider', description: 'synthesizer owned by the contributing fiber.' }],
+        returns: 'idempotent disposer which rejects admission, cancels, and joins accepted work.',
+      },
+      {
+        signature: 'listProviders(): readonly SynthesisProvider[\'info\'][]',
+        description: 'Read the current synthesizer roster.',
+        parameters: [],
+        returns: 'available provider facts in registration order.',
+      },
+      {
+        signature: 'async *follow(caller: AbortSignal): AsyncIterable<SynthesisSnapshot>',
+        description: 'Observe complete readiness snapshots; a slow reader coalesces intermediate progress.',
+        parameters: [{ name: 'caller', description: 'observer lifetime, independent of any preparation task.' }],
+        returns: 'an initial snapshot followed by the latest provider states.',
+      },
+      {
+        signature: 'snapshot(): SynthesisSnapshot',
+        description: 'Read provider readiness and current user preferences together.',
+        parameters: [],
+        returns: 'one detached complete observation.',
+      },
+      {
+        signature: 'async configure(patch: SynthesisSelectionPatch): Promise<void>',
+        description: 'Persist changed selection fields into this plugin\'s profile entry; the resulting voice and language must be accepted by the selected provider.',
+        parameters: [{ name: 'patch', description: 'explicit provider, voice or language changes.' }],
+        returns: 'after the profile write and the live update it applies.',
+      },
+      {
+        signature: 'prepare(id: SynthesisProviderId, options?: SynthesisPreparationOptions): void',
+        description: 'Start or join provider-owned preparation.',
+        parameters: [{ name: 'id', description: 'exact registered provider identity.' }, { name: 'options', description: 'task-local source selection validated by the provider.' }],
+      },
+      {
+        signature: 'async cancelPreparation(id: SynthesisProviderId): Promise<void>',
+        description: 'Explicitly cancel provider preparation without tying it to a browser connection.',
+        parameters: [{ name: 'id', description: 'exact registered provider identity.' }],
+        returns: 'after the preparation task settles.',
+      },
+      {
+        signature: 'resolve(request: SynthesisRequest): SynthesisSpec',
+        description: 'Apply composition defaults and capture the selected provider. Missing providers, voices and unsupported languages fail explicitly.',
+        parameters: [{ name: 'request', description: 'complete text and optional selection.' }],
+        returns: 'provider-pinned input for synthesize().',
+      },
+      {
+        signature: 'async synthesize(spec: SynthesisSpec, signal: AbortSignal): Promise<SynthesisResult>',
+        description: 'Execute exactly the resolved provider; no fallback sends text elsewhere.',
+        parameters: [{ name: 'spec', description: 'resolved input; a withdrawn or replaced registration is rejected.' }, { name: 'signal', description: 'caller cancellation.' }],
+        returns: 'final audio after provider settlement.',
+      },
+    ],
+  },
+  {
     key: 'timer',
     summary: 'Disposable timer helpers mixed into Cordis contexts.',
     description: 'Disposable timer helpers mixed into Cordis contexts.',
@@ -3455,6 +3515,48 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Translate one resolved specification; the selected provider receives its text.',
         parameters: [{ name: 'spec', description: 'complete routing and language choices from `resolve()`.' }, { name: 'signal', description: 'optional caller cancellation, combined with service disposal.' }],
         returns: 'translated plain text, durably retained before return when a Session is supplied. An uncached supplied Session must be active; otherwise rejects with `TRANSLATION_SESSION_INACTIVE` before dispatch. Rejects provider/storage/limit failures and preserves cancellation reasons.',
+      },
+    ],
+  },
+  {
+    key: 'ttsController',
+    summary: 'Synthesis calls never activate or submit to an Agent.',
+    description: 'Synthesis calls never activate or submit to an Agent.',
+    methods: [
+      {
+        signature: '@Remote catalog(): TtsCatalog',
+        description: 'Read provider choices without preparing a synthesizer.',
+        parameters: [],
+        returns: 'available providers, resolved default, and intake limits.',
+      },
+      {
+        signature: '@Remote({ mode: \'stream\' }) async *follow(signal: AbortSignal): AsyncIterable<TtsCatalog>',
+        description: 'Follow provider readiness independently of Session and preparation lifetimes.',
+        parameters: [{ name: 'signal', description: 'Client observation lifetime.' }],
+        returns: 'initial and subsequent complete readiness snapshots.',
+      },
+      {
+        signature: '@Remote configure(patch: SynthesisSelectionPatch): Promise<void>',
+        description: 'Persist the user\'s synthesis preferences.',
+        parameters: [{ name: 'patch', description: 'changed preference fields.' }],
+        returns: 'after preferences are saved.',
+      },
+      {
+        signature: '@Remote prepare(providerId: SynthesisProviderId, options?: SynthesisPreparationOptions): void',
+        description: 'Start or join one Host-owned preparation task.',
+        parameters: [{ name: 'providerId', description: 'selected synthesizer.' }, { name: 'options', description: 'task-local source selection validated by the provider.' }],
+      },
+      {
+        signature: '@Remote cancelPreparation(providerId: SynthesisProviderId): Promise<void>',
+        description: 'Explicitly cancel resource preparation.',
+        parameters: [{ name: 'providerId', description: 'selected synthesizer.' }],
+        returns: 'after the preparation task settles.',
+      },
+      {
+        signature: '@Remote async synthesize(request: SynthesisRequestWire, signal: AbortSignal): Promise<SynthesizedAudioWire>',
+        description: 'Validate and synthesize one text through the explicit provider selection.',
+        parameters: [{ name: 'request', description: 'text, provider id, voice id and language hint.' }, { name: 'signal', description: 'Client cancellation or Remote contribution disposal.' }],
+        returns: 'canonical WAV encoded as base64, without adding a Session event.',
       },
     ],
   },
@@ -7881,6 +7983,62 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface SurfaceSnapshot {\n    readonly generation: number;\n    readonly tree: readonly SerializedNode[] | null;\n}',
   },
   {
+    name: 'SynthesisInput',
+    declaration: 'export interface SynthesisInput {\n    readonly text: string;\n    readonly voiceId: string;\n    readonly language: string;\n}',
+  },
+  {
+    name: 'SynthesisProvider',
+    declaration: 'export interface SynthesisProvider {\n    readonly info: SynthesisProviderInfo;\n    readonly preparation?: import(\'@deepseek-ai/dsh-experimental-speech-to-text/types\').SpeechPreparation;\n    synthesize(input: SynthesisInput, signal: AbortSignal): Promise<SynthesisResult>;\n}',
+  },
+  {
+    name: 'SynthesisProviderId',
+    declaration: 'export type SynthesisProviderId = Branded<\'SynthesisProviderId\'>;',
+  },
+  {
+    name: 'SynthesisProviderInfo',
+    declaration: 'export interface SynthesisProviderInfo {\n    readonly id: SynthesisProviderId;\n    readonly name: string;\n    readonly location: \'host-local\' | \'cloud\';\n    readonly voices: readonly SynthesisVoice[];\n    readonly setupEstimate?: import(\'@deepseek-ai/dsh-experimental-speech-to-text/types\').SpeechSetupEstimate;\n    readonly downloadSources?: readonly string[];\n}',
+  },
+  {
+    name: 'SynthesisProviderView',
+    declaration: 'export interface SynthesisProviderView extends SynthesisProviderInfo {\n    readonly preparation: import(\'@deepseek-ai/dsh-experimental-speech-to-text/types\').SpeechPreparationState;\n}',
+  },
+  {
+    name: 'SynthesisRequest',
+    declaration: 'export interface SynthesisRequest {\n    readonly text: string;\n    readonly providerId?: SynthesisProviderId;\n    readonly voiceId?: string;\n    readonly language?: string;\n}',
+  },
+  {
+    name: 'SynthesisRequestWire',
+    declaration: 'export interface SynthesisRequestWire {\n    readonly text: string;\n    readonly providerId?: SynthesisProviderId;\n    readonly voiceId?: string;\n    readonly language?: string;\n}',
+  },
+  {
+    name: 'SynthesisResult',
+    declaration: 'export interface SynthesisResult {\n    readonly audio: Uint8Array;\n    readonly mimeType: \'audio/wav\';\n    readonly sampleRate: number;\n    readonly audioSeconds: number;\n    readonly synthesisSeconds: number;\n}',
+  },
+  {
+    name: 'SynthesisSelection',
+    declaration: 'export interface SynthesisSelection {\n    readonly providerId: SynthesisProviderId;\n    readonly voiceId: string;\n    readonly language: string;\n}',
+  },
+  {
+    name: 'SynthesisSelectionPatch',
+    declaration: 'export interface SynthesisSelectionPatch {\n    readonly providerId?: SynthesisProviderId;\n    readonly voiceId?: string;\n    readonly language?: string;\n}',
+  },
+  {
+    name: 'SynthesisSnapshot',
+    declaration: 'export interface SynthesisSnapshot {\n    readonly providers: readonly SynthesisProviderView[];\n    readonly selection: SynthesisSelection;\n}',
+  },
+  {
+    name: 'SynthesisSpec',
+    declaration: 'export interface SynthesisSpec extends SynthesisInput {\n    readonly provider: SynthesisProvider;\n}',
+  },
+  {
+    name: 'SynthesisVoice',
+    declaration: 'export interface SynthesisVoice {\n    readonly id: string;\n    readonly name: string;\n    readonly languages: readonly string[];\n    readonly gender?: \'female\' | \'male\';\n}',
+  },
+  {
+    name: 'SynthesizedAudioWire',
+    declaration: 'export interface SynthesizedAudioWire {\n    readonly audioBase64: string;\n    readonly mimeType: \'audio/wav\';\n    readonly sampleRate: number;\n    readonly audioSeconds: number;\n    readonly synthesisSeconds: number;\n}',
+  },
+  {
     name: 'SystemMessage',
     declaration: 'export interface SystemMessage extends MessageBase {\n    readonly role: \'system\';\n    readonly source: MessageSourceMap[\'system-prompt\'];\n}',
   },
@@ -8239,6 +8397,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'TranslationSpec',
     declaration: 'export type TranslationSpec = AnonymousTranslationSpec | PaidTranslationSpec;',
+  },
+  {
+    name: 'TtsCatalog',
+    declaration: 'export interface TtsCatalog extends SynthesisSnapshot {\n    readonly maxTextChars: number;\n    readonly maxAudioBytes: number;\n}',
   },
   {
     name: 'TurnCompleteInput',

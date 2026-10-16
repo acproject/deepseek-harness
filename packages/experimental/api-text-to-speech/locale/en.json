@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Speech synthesis API",
+    "description": "Provide speech synthesis for browser clients."
+  }
+}

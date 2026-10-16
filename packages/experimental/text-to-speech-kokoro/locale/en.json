@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Local Kokoro speech synthesis",
+    "description": "Offline Chinese and English speech synthesis with a managed sherpa-onnx process."
+  }
+}

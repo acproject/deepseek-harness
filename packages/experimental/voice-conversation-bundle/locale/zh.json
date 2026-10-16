@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "语音对话",
+    "description": "免手操作与智能体对话：本地 SenseVoice 转写与本地 Kokoro 语音合成，首次使用需安装依赖。"
+  }
+}

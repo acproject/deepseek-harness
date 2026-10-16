@@ -227,6 +227,14 @@ describe('client bundle purity gate', () => {
     expect(() => resolveId('@deepseek-ai/dsh-plugin-manager/registry/internal')).toThrow(/purity/)
   })
 
+  it('lets the pure voice-input audio fold inline without admitting the plugin itself', () => {
+    const voiceAudio = '@deepseek-ai/dsh-experimental-client-ui-voice-input/audio'
+    expect(resolveId(voiceAudio)).toBeNull()
+    expect(() => resolveId('@deepseek-ai/dsh-experimental-client-ui-voice-input')).toThrow(/purity/)
+    expect(() => resolveId(`${voiceAudio}/internal`)).toThrow(/purity/)
+    expect(() => resolveId('@deepseek-ai/dsh-experimental-client-ui-voice-input/client')).toThrow(/purity/)
+  })
+
   it('admits only the pure spill notice entry, not its Host policy', () => {
     expect(resolveId('@deepseek-ai/dsh-spill-policy/notice')).toBeNull()
     expect(resolveId('@deepseek-ai/dsh-output-retention')).toBeNull()

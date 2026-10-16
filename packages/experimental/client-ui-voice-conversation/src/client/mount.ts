@@ -1,0 +1,170 @@
+/** Source-safe lifecycle for the speech + TTS Remotes and the always-on UI. */
+import type { Context } from '@deepseek-ai/cordis'
+import type {} from '@deepseek-ai/dsh-api-remotes/client'
+import type {} from '@deepseek-ai/dsh-experimental-api-speech-to-text/remote'
+import type {} from '@deepseek-ai/dsh-experimental-api-text-to-speech/remote'
+import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type { ISessions, SessionBinding } from '@deepseek-ai/dsh-api-session-controller/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/client'
+import type { TypertRemoteContribution } from '@deepseek-ai/dsh-typert-protocol'
+import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
+import type { SpeechCatalog } from '@deepseek-ai/dsh-experimental-api-speech-to-text/types'
+import type { TtsCatalog } from '@deepseek-ai/dsh-experimental-api-text-to-speech/types'
+import { VoiceController } from './controller.ts'
+import { VoiceConversation, type VoiceConversationInjected } from './VoiceConversation.tsx'
+import { VoiceConfigCard, type VoiceConfigInjected } from './PreparationCard.tsx'
+import { VoiceSetupPrompt } from './VoiceSetupPrompt.tsx'
+import { createMicrophoneDeviceStore } from './microphone-device.ts'
+import { en, NS, zh } from './locales.ts'
+import { observeCatalog, type SpeechReadiness, type TtsReadiness } from './readiness.ts'
+
+export const inject = ['remote', 'remote.speech', 'remote.tts', 'slots', 'locale', 'sessions', 'pluginNavigation']
+
+/** Resolve or create the one voice loop bound to one Session. */
+function controllerFor(
+  sessions: ISessions,
+  sessionId: Parameters<ISessions['binding']>[0],
+  controllers: WeakMap<SessionBinding, VoiceController>,
+  ctx: Context,
+  speechState: SnapshotStore<SpeechReadiness>,
+  ttsState: SnapshotStore<TtsReadiness>,
+): { binding: SessionBinding; controller: VoiceController } {
+  const binding = sessions.binding(sessionId)
+  if (binding === undefined) throw new Error(`voice-conversation: session "${String(sessionId)}" has no binding`)
+  const existing = controllers.get(binding)
+  if (existing !== undefined) return { binding, controller: existing }
+  const scoped = sessions.scope(sessionId)
+  if (scoped === undefined) throw new Error(`voice-conversation: session "${String(sessionId)}" resolved no scope`)
+  const conversation = scoped.get('conversation')
+  if (conversation === undefined) {
+    throw new Error('voice-conversation: conversation service unavailable through the session scope')
+  }
+  const controller = new VoiceController({
+    speech: speechState,
+    tts: ttsState,
+    send: text => conversation.send(text),
+    cancel: () => conversation.cancel(),
+    subscribeSession: listener => binding.session.subscribe(listener),
+    sessionRunning: () => binding.session.getSnapshot().running,
+    subscribeEvents: listener => binding.eventSource.subscribe(listener),
+    eventWindow: () => binding.eventSource.getSnapshot(),
+    transcribe: (request, signal) => ctx.remote.speech.transcribe(request, signal),
+    synthesize: (request, signal) => ctx.remote.tts.synthesize(request, signal),
+  })
+  controllers.set(binding, controller)
+  return { binding, controller }
+}
+
+function registerUi(ctx: Context): void {
+  ctx.effect(() => ctx.locale.register(NS, { zh, en }))
+  const microphone = createMicrophoneDeviceStore()
+  const speech = observeCatalog<SpeechCatalog>(ctx, 'speech.catalog', signal => ctx.remote.speech.follow(signal))
+  const tts = observeCatalog<TtsCatalog>(ctx, 'tts.catalog', signal => ctx.remote.tts.follow(signal))
+  ctx.effect(() => speech.dispose)
+  ctx.effect(() => tts.dispose)
+  const sessions = ctx.get('sessions') as ISessions
+  const controllers = new WeakMap<SessionBinding, VoiceController>()
+
+  const config: VoiceConfigInjected = {
+    hooks: {
+      speechReadiness: speech.state,
+      ttsReadiness: tts.state,
+      microphoneDevice: microphone,
+    },
+    configureSpeech: async (patch) => {
+      const result = await ctx.remote.speech.configure(patch)
+      if (!result.ok) throw result.error
+    },
+    configureTts: async (patch) => {
+      const result = await ctx.remote.tts.configure(patch)
+      if (!result.ok) throw result.error
+    },
+    prepareSpeech: async (providerId) => {
+      const result = await ctx.remote.speech.prepare(providerId)
+      if (!result.ok) throw result.error
+    },
+    cancelSpeechPreparation: async (providerId) => {
+      const result = await ctx.remote.speech.cancelPreparation(providerId)
+      if (!result.ok) throw result.error
+    },
+    prepareTts: async (providerId) => {
+      const result = await ctx.remote.tts.prepare(providerId)
+      if (!result.ok) throw result.error
+    },
+    cancelTtsPreparation: async (providerId) => {
+      const result = await ctx.remote.tts.cancelPreparation(providerId)
+      if (!result.ok) throw result.error
+    },
+    selectMicrophone: (device) => { microphone.set(device) },
+  }
+
+  ctx.slots.inject('conversation.input.activity', () => ctx.slots.register({
+    name: 'conversation.input.activity',
+    locale: NS,
+    inject: (sessionId): VoiceConversationInjected => {
+      const { binding, controller } = controllerFor(sessions, sessionId, controllers, ctx, speech.state, tts.state)
+      return {
+        hooks: {
+          speechReadiness: speech.state,
+          ttsReadiness: tts.state,
+          voiceState: controller.state,
+          microphoneDevice: microphone,
+        },
+        openSettings: () => { ctx.pluginNavigation.openBundle('@deepseek-ai/dsh-experimental-voice-conversation-bundle') },
+        start: deviceId => controller.start(deviceId),
+        stop: () => controller.stop(),
+        release: async () => {
+          await controller.dispose()
+          controllers.delete(binding)
+        },
+        getAmplitude: () => controller.amplitude(),
+        selectMicrophone: (device) => { microphone.set(device) },
+      }
+    },
+  }, VoiceConversation))
+
+  ctx.slots.inject('plugins.bundle.config', () => ctx.slots.register({
+    name: 'plugins.bundle.config',
+    key: '@deepseek-ai/dsh-experimental-voice-conversation-bundle',
+    locale: NS,
+    inject: () => config,
+  }, VoiceConfigCard))
+
+  ctx.slots.inject('plugins.bundle.activation', () => ctx.slots.register({
+    name: 'plugins.bundle.activation',
+    key: '@deepseek-ai/dsh-experimental-voice-conversation-bundle',
+    locale: NS,
+    inject: () => config,
+  }, VoiceSetupPrompt))
+}
+
+/**
+ * Mount both experimental namespaces without adding them to stable API Remotes.
+ * @param ctx - Client runtime owning the Remotes, dictionaries and slots.
+ * @param speechContribution - generated speech Remote definitions.
+ * @param ttsContribution - generated synthesis Remote definitions.
+ * @returns disposer joining UI and both Remote withdrawals.
+ */
+export async function mountVoiceConversation(
+  ctx: Context,
+  speechContribution: TypertRemoteContribution,
+  ttsContribution: TypertRemoteContribution,
+): Promise<() => Promise<void>> {
+  const disposeSpeech = await ctx.remote.$mount(speechContribution)
+  const disposeTts = await ctx.remote.$mount(ttsContribution)
+  const ui = ctx.inject(inject, registerUi)
+  try {
+    await ui
+  } catch (error) {
+    await ui.dispose()
+    await disposeTts()
+    await disposeSpeech()
+    throw error
+  }
+  return async () => {
+    await ui.dispose()
+    await disposeTts()
+    await disposeSpeech()
+  }
+}

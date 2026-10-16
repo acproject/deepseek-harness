@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "本地 Kokoro 语音合成",
+    "description": "通过受管 sherpa-onnx 进程提供离线中英文语音合成。"
+  }
+}
