@@ -11,6 +11,7 @@ import type { SynthesisProviderId } from '@deepseek-ai/dsh-experimental-text-to-
 import { describe, expect, it, vi } from 'vitest'
 import { mountVoiceConversation, inject } from '../src/client/mount.ts'
 import { apply as hostApply } from '../src/index.ts'
+import { AssistantSpeakAction } from '../src/client/AssistantSpeakAction.tsx'
 import { VoiceConversation } from '../src/client/VoiceConversation.tsx'
 import { VoiceConfigCard } from '../src/client/PreparationCard.tsx'
 import { VoiceSetupPrompt } from '../src/client/VoiceSetupPrompt.tsx'
@@ -100,6 +101,7 @@ async function fixture() {
   await ctx.plugin(SlotRegistry)
   ctx.slots.register({ name: 'root', children: {
     'conversation.input.activity': { kind: 'single', scope: 'session' },
+    'conversation.chat.assistant-actions': { kind: 'list', scope: 'session' },
     'plugins.bundle.activation': { kind: 'keyed', scope: 'root' },
     'plugins.bundle.config': { kind: 'keyed', scope: 'root' },
   } } as never, () => null)
@@ -138,8 +140,15 @@ describe('mountVoiceConversation', () => {
         expect(item?.locale).toBe('voice-conversation')
       }
 
+      const speakEntry = b.ctx.slots.entries('conversation.chat.assistant-actions').find(item => item.component === AssistantSpeakAction)
+      expect(speakEntry).toMatchObject({ locale: 'voice-conversation' })
+      const speakActions: Record<string, unknown> = speakEntry!.inject!('s1' as never)
+      assert(typeof speakActions.synthesize === 'function')
+      assert(typeof speakActions.hooks === 'object' && speakActions.hooks !== null)
+
       await fiber.dispose()
       expect(b.ctx.slots.entries('conversation.input.activity')).toHaveLength(0)
+      expect(b.ctx.slots.entries('conversation.chat.assistant-actions')).toHaveLength(0)
       expect(b.ctx.slots.entries('plugins.bundle.config')).toHaveLength(0)
       expect(b.ctx.slots.entries('plugins.bundle.activation')).toHaveLength(0)
       for (const unmount of b.unmounts) expect(unmount).toHaveBeenCalledTimes(unmount === b.unmounts[1] ? 1 : 0)

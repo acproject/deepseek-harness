@@ -10,8 +10,12 @@ import type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/client'
 import type { TypertRemoteContribution } from '@deepseek-ai/dsh-typert-protocol'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { SpeechCatalog } from '@deepseek-ai/dsh-experimental-api-speech-to-text/types'
-import type { TtsCatalog } from '@deepseek-ai/dsh-experimental-api-text-to-speech/types'
+import type {
+  SynthesisRequestWire,
+  TtsCatalog,
+} from '@deepseek-ai/dsh-experimental-api-text-to-speech/types'
 import { VoiceController } from './controller.ts'
+import { AssistantSpeakAction } from './AssistantSpeakAction.tsx'
 import { VoiceConversation, type VoiceConversationInjected } from './VoiceConversation.tsx'
 import { VoiceConfigCard, type VoiceConfigInjected } from './PreparationCard.tsx'
 import { VoiceSetupPrompt } from './VoiceSetupPrompt.tsx'
@@ -125,6 +129,7 @@ function registerUi(ctx: Context): void {
         openSettings: () => { ctx.pluginNavigation.openBundle('@deepseek-ai/dsh-experimental-voice-conversation-bundle') },
         start: deviceId => controller.start(deviceId),
         stop: () => controller.stop(),
+        setMuted: muted => controller.setMuted(muted),
         release: async () => {
           await controller.dispose()
           controllers.delete(binding)
@@ -134,6 +139,18 @@ function registerUi(ctx: Context): void {
       }
     },
   }, VoiceConversation))
+
+  // Manual replay entry beside copy in every finalized assistant reply.
+  ctx.slots.inject('conversation.chat.assistant-actions', () => ctx.slots.register({
+    name: 'conversation.chat.assistant-actions',
+    id: 'speak',
+    order: 20,
+    locale: NS,
+    inject: () => ({
+      hooks: { ttsReadiness: tts.state },
+      synthesize: (request: SynthesisRequestWire, signal: AbortSignal) => ctx.remote.tts.synthesize(request, signal),
+    }),
+  }, AssistantSpeakAction))
 
   ctx.slots.inject('plugins.bundle.config', () => ctx.slots.register({
     name: 'plugins.bundle.config',

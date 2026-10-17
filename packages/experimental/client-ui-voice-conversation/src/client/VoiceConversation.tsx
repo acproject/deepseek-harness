@@ -19,6 +19,8 @@ export interface VoiceConversationActions {
   start: (deviceId: string) => Promise<void>
   /** Stop listening, cancel speech and release the microphone. */
   stop: () => Promise<void>
+  /** Skip or resume synthesizing replies without stopping the loop. */
+  setMuted: (muted: boolean) => void
   /** Dispose the per-Session controller when the activity unmounts. */
   release: () => Promise<void>
   /** Latest microphone RMS for the live level meter. */
@@ -51,7 +53,7 @@ function usablePhase(readiness: SpeechReadiness | TtsReadiness): boolean {
 /** Render the mic toggle or the expanded always-on phase row. */
 export function VoiceConversation({ sessionId, locked, onActiveChange, t,
   useSpeechReadiness, useTtsReadiness, useVoiceState, useMicrophoneDevice,
-  start, stop, release, getAmplitude, openSettings }: VoiceConversationProps) {
+  start, stop, release, getAmplitude, openSettings, setMuted }: VoiceConversationProps) {
   const speech = useSpeechReadiness(value => value)
   const tts = useTtsReadiness(value => value)
   const voice = useVoiceState(value => value)
@@ -127,7 +129,14 @@ export function VoiceConversation({ sessionId, locked, onActiveChange, t,
       <StateDot state={voice.phase === 'listening' ? 'done' : 'ongoing'} size={12} />
       {t(`phase.${voice.phase}`)}
     </span>
+    <Button type="button" className={css.mute} size="sm" aria-pressed={voice.muted}
+      aria-label={voice.muted ? t('unmute') : t('mute')}
+      onClick={() => { setMuted(!voice.muted) }}>
+      {voice.muted ? t('unmute') : t('mute')}
+    </Button>
     {voice.speakerWarning && <span className={css.notice}>{t('speakerWarning')}</span>}
-    {errorKind !== null && <span className={css.error} role="alert">{t(`error.${errorKind}`)}</span>}
+    {errorKind !== null && <span className={css.error} role="alert">
+      {t(`error.${errorKind}`)}{voice.error?.message ? ` (${voice.error.message})` : ''}
+    </span>}
   </div>
 }

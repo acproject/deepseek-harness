@@ -51,9 +51,10 @@ export const TurnTailNodeView = memo(function TurnTailNodeView({
   // Interruption-frozen partials carry no messageId, so they address no
   // durable message and contribute no per-message actions.
   const messageId = closing.finalNode.messageId
+  const replyText = assistantText(closing.blocks)
   const assistantActions = messageId === undefined
     ? null
-    : renderSlot('conversation.chat.assistant-actions', { messageId })
+    : renderSlot('conversation.chat.assistant-actions', { messageId, text: replyText })
   return (
     <div
       className={css.root}
@@ -62,7 +63,7 @@ export const TurnTailNodeView = memo(function TurnTailNodeView({
     >
       {tail}
       <MessageIconActions
-        text={assistantText(closing.blocks)}
+        text={replyText}
         time={closing.time}
         clock="end"
         // The branch action owns boundary resolution: it sends the real

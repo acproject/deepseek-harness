@@ -116,6 +116,9 @@ export class AlwaysOnCapture {
    * @param options - device and host limits.
    */
   async start(options: CaptureStartOptions): Promise<void> {
+    // A previous session's stop()/failInterrupted() leaves `stopped` set; reuse of this instance
+    // requires clearing it before acquisition so the mid-start concurrency check stays meaningful.
+    this.stopped = false
     // Some embedded WebViews ship without mediaDevices despite the non-optional lib.dom type.
     const devices = (globalThis.navigator as { mediaDevices?: MediaDevices }).mediaDevices
     if (devices === undefined) throw new CaptureError('unavailable')
@@ -137,6 +140,7 @@ export class AlwaysOnCapture {
       }
       throw error
     }
+    // oxlint-disable-next-line typescript/no-unnecessary-condition -- stop() can set the flag while getUserMedia is awaited.
     if (this.stopped) {
       stream.getTracks().forEach((track) => { track.stop() })
       throw new CaptureError('interrupted')

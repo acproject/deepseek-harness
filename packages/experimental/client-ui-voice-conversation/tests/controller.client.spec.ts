@@ -321,6 +321,30 @@ describe('VoiceController', () => {
     await harness.controller.dispose()
   })
 
+  it('skips synthesis while muted and resumes on unmute without disturbing the loop', async () => {
+    const harness = makeHarness()
+    await harness.controller.start('')
+    harness.setRunning(true)
+
+    harness.controller.setMuted(true)
+    harness.events.append(chunkEntry('静音时说的话。'))
+    harness.notifyEvents()
+    harness.events.settleAssistant(ATTEMPT, { type: 'event', event: messageEvent(100, '静音时说的话。') })
+    harness.notifyEvents()
+    await vi.waitFor(() => { expect(harness.controller.state.getSnapshot().muted).toBe(true) })
+    expect(harness.synthesize).not.toHaveBeenCalled()
+    expect(harness.playback.enqueued).toEqual([])
+    expect(harness.controller.state.getSnapshot().phase).not.toBe('off')
+
+    harness.controller.setMuted(false)
+    harness.events.append(chunkEntry('恢复后的话。'))
+    harness.notifyEvents()
+    harness.events.settleAssistant(ATTEMPT, { type: 'event', event: messageEvent(101, '恢复后的话。') })
+    harness.notifyEvents()
+    await vi.waitFor(() => { expect(harness.synthesize).toHaveBeenCalledOnce() })
+    await harness.controller.dispose()
+  })
+
   it('aborts pending synthesis and playback on an interrupted settlement', async () => {
     const harness = makeHarness()
     const { synthesize } = harness

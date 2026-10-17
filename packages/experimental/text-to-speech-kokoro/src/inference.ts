@@ -30,7 +30,7 @@ interface NativeResult {
 interface NativeTts {
   readonly numSpeakers: number
   readonly sampleRate: number
-  generate(input: { text: string; sid: number; speed: number }): NativeResult
+  generate(input: { text: string; sid: number; speed: number; enableExternalBuffer: false }): NativeResult
 }
 
 interface Sherpa {
@@ -96,7 +96,8 @@ export function createSynthesizer(config: InferenceConfig): (text: string, voice
     const voice = kokoroVoice(voiceId)
     if (!voice) throw new SynthesisInputError(`Unknown Kokoro voice: ${voiceId}`)
     const started = performance.now()
-    const generated = tts.generate({ text, sid: voice.sid, speed: config.speed })
+    // Electron's V8 memory cage requires copied native buffers, including TTS output.
+    const generated = tts.generate({ text, sid: voice.sid, speed: config.speed, enableExternalBuffer: false })
     const synthesisSeconds = (performance.now() - started) / 1000
     const audio = encodeWav(generated.samples, generated.sampleRate)
     if (audio.byteLength > config.maxAudioBytes) throw new SynthesisInputError('Synthesized speech exceeds the worker byte limit')

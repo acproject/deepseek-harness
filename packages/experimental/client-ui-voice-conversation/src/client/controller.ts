@@ -60,6 +60,8 @@ export class VoiceError extends Error {
 /** Renderable voice-loop state consumed by the activity slot. */
 export interface VoiceUiState {
   readonly phase: VoicePhase
+  /** Muting keeps the loop running but skips synthesizing and playing replies. */
+  readonly muted: boolean
   readonly speakerWarning: boolean
   readonly error: { readonly kind: VoiceErrorKind; readonly message: string | null } | null
 }
@@ -107,7 +109,7 @@ function preparationUsable(preparation: { readonly phase: string }): boolean {
 }
 
 /** Decode base64 audio returned by the TTS Remote. */
-function decodeBase64ToBytes(base64: string): Uint8Array {
+export function decodeBase64ToBytes(base64: string): Uint8Array {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
   for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index)
@@ -128,6 +130,11 @@ export class VoiceController {
   private unsubscribers: Array<() => void> = []
   private readonly synthJobs = new Map<string, AbortController>()
   private pipelineTail: Promise<void> = Promise.resolve()
+  /**
+   * Resolves when the latest sentence's synthesis request settles; serializes Remote calls so a long
+   * reply cannot exceed the host provider's pending-request cap.
+   */
+  private synthGate: Promise<void> = Promise.resolve()
   private pendingSynth = 0
   private segmentChain: Promise<void> = Promise.resolve()
   private gateState: VadState = 'calibrating'
@@ -137,7 +144,7 @@ export class VoiceController {
 
   constructor(deps: VoiceConversationDeps, pieces: ControllerPieces = {}) {
     this.deps = deps
-    this.state = createSnapshotStore<VoiceUiState>({ phase: 'off', speakerWarning: false, error: null })
+    this.state = createSnapshotStore<VoiceUiState>({ phase: 'off', muted: false, speakerWarning: false, error: null })
     this.echoGuard = new EchoGuard({ maxChars: ECHO_MAX_CHARS, ttlMs: ECHO_TTL_MS, now: () => Date.now() })
     const captureHandlers: CaptureHandlers = {
       onLevel: () => undefined,
@@ -164,6 +171,12 @@ export class VoiceController {
    */
   amplitude(): number {
     return this.capture.amplitude()
+  }
+
+  /** Toggle reply playback without interrupting capture, transcription or the session loop. */
+  setMuted(muted: boolean): void {
+    const snapshot = this.state.getSnapshot()
+    if (snapshot.muted !== muted) this.setState({ ...snapshot, muted })
   }
 
   /** Whether the loop owns the microphone. */
@@ -226,7 +239,7 @@ export class VoiceController {
     this.cancelAssistantSpeech()
     await this.capture.stop()
     this.teardown()
-    this.setState({ phase: 'off', speakerWarning: false, error: this.state.getSnapshot().error })
+    this.setState({ ...this.state.getSnapshot(), phase: 'off', speakerWarning: false, error: this.state.getSnapshot().error })
   }
 
   /** Release every resource when the Session UI unmounts. */
@@ -314,7 +327,7 @@ export class VoiceController {
   private readonly feedHandler: AssistantSpeechHandler = {
     onSentence: (sentenceKey: string, _attemptId: string, text: string) => {
       const runSignal = this.runSignal?.signal
-      if (runSignal === undefined || runSignal.aborted) return
+      if (runSignal === undefined || runSignal.aborted || this.state.getSnapshot().muted) return
       const ttsCatalog = this.deps.tts.getSnapshot().catalog
       if (ttsCatalog === null) return
       const controller = new AbortController()
@@ -328,11 +341,13 @@ export class VoiceController {
         ...(ttsCatalog.selection.language === 'auto' ? {} : { language: ttsCatalog.selection.language }),
       }
       const job = (async () => {
+        await this.synthGate
         const result = await this.deps.synthesize(request, AbortSignal.any([runSignal, controller.signal]))
         if (controller.signal.aborted || runSignal.aborted) return
         if (!result.ok) throw new Error(result.error.message)
         this.playback.enqueue(sentenceKey, text, decodeBase64ToBytes(result.value.audioBase64), controller.signal)
       })()
+      this.synthGate = job.then(() => undefined, () => undefined)
       const tracked = job
         .catch((error: unknown) => {
           if (!controller.signal.aborted && !runSignal.aborted) {
@@ -390,7 +405,7 @@ export class VoiceController {
     this.teardown()
     void this.capture.stop().catch(() => undefined)
     const kind: VoiceErrorKind = `capture-${error.kind}` as VoiceErrorKind
-    this.setState({ phase: 'off', speakerWarning: false, error: { kind, message: null } })
+    this.setState({ ...this.state.getSnapshot(), phase: 'off', speakerWarning: false, error: { kind, message: null } })
   }
 
   private fail(kind: VoiceErrorKind, message: string | null): void {

@@ -64,7 +64,7 @@ function makeActivityProps(overrides: {
 } = {}): ActivityHarness {
   const speech = createSnapshotStore<SpeechReadiness>(overrides.speech ?? { catalog: speechCatalog, connected: true, error: null })
   const tts = createSnapshotStore<TtsReadiness>({ catalog: ttsCatalog, connected: true, error: null })
-  const voice = createSnapshotStore<VoiceUiState>(overrides.voice ?? { phase: 'off', speakerWarning: false, error: null })
+  const voice = createSnapshotStore<VoiceUiState>(overrides.voice ?? { phase: 'off', muted: false, speakerWarning: false, error: null })
   const microphone = createSnapshotStore<MicrophoneDevice>({ id: '', label: '' })
   const start = vi.fn(async () => undefined)
   const stop = vi.fn(async () => undefined)
@@ -85,6 +85,7 @@ function makeActivityProps(overrides: {
     release,
     getAmplitude: () => 0,
     selectMicrophone: vi.fn(),
+    setMuted: vi.fn(),
   }
   return { props, start, stop, release, openSettings, voice }
 }
@@ -105,7 +106,7 @@ it('opens bundle settings when a service is not ready', () => {
 
 it('renders the live phase row, warning and error while active', () => {
   const { props, stop, voice } = makeActivityProps({
-    voice: { phase: 'speaking', speakerWarning: true, error: { kind: 'synthesize-failed', message: null } },
+    voice: { phase: 'speaking', muted: false, speakerWarning: true, error: { kind: 'synthesize-failed', message: null } },
   })
   const view = render(<VoiceConversation {...props} />)
   expect(view.getByRole('status').textContent).toContain('phase.speaking')
@@ -115,6 +116,15 @@ it('renders the live phase row, warning and error while active', () => {
   expect(stop).toHaveBeenCalledOnce()
   view.unmount()
   voice.set({ ...voice.getSnapshot(), phase: 'off' })
+})
+
+it('appends the underlying error message to the alert text when present', () => {
+  const { props } = makeActivityProps({
+    voice: { phase: 'listening', muted: false, speakerWarning: false, error: { kind: 'synthesize-failed', message: 'worker exited' } },
+  })
+  const view = render(<VoiceConversation {...props} />)
+  expect(view.getByRole('alert').textContent).toBe('error.synthesize-failed (worker exited)')
+  view.unmount()
 })
 
 it('releases the per-session loop on unmount', () => {
