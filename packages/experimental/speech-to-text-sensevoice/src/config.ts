@@ -61,7 +61,7 @@ export const Config: z<Partial<Config>, Config> = z.object({
   precision: z.union(['int8', 'fp32']).default('int8'),
   modelOrigin: z.union([z.string().pattern(/^https?:\/\/[^/\s?#@]+\/?$/), z.const(undefined)]),
   modelOrigins: z.array(z.string().pattern(/^https?:\/\/[^/\s?#@]+\/?$/)).min(1)
-    .default(['https://huggingface.co', 'https://hf-mirror.com']),
+    .default(['https://hf-mirror.com', 'https://huggingface.co']),
   modelProbeTimeoutMs: z.natural().min(1).max(MAX_TIMER_DELAY_MS).default(3000),
   threads: z.natural().min(1).default(2),
   segmentSeconds: z.number().min(1).max(120).default(30),

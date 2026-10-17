@@ -72,10 +72,22 @@ it('rejects preparation cancellation after joining both probes', async () => {
 
 it('uses a single deduplicated origin without probing and rejects already cancelled preparation', async () => {
   const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher)
-  expect(await orderModelSources(origins[0] + path, ['https://private.example', 'https://private.example/'], 50,
+  // Two identical origins deduplicate to one URL; trailing slash now marks prefix mode.
+  expect(await orderModelSources(origins[0] + path, ['https://private.example', 'https://private.example'], 50,
     new AbortController().signal)).toEqual(['https://private.example' + path])
   await expect(orderModelSources(origins[0] + path, origins, 50, AbortSignal.abort(new Error('cancelled')))).rejects.toThrow('cancelled')
   expect(fetcher).not.toHaveBeenCalled()
+})
+
+it('treats origins ending in "/" as prefix proxies', async () => {
+  const asset = 'https://github.com/k2-fsa/sherpa-onnx/releases/download/file.tar.bz2'
+  const urls = await orderModelSources(asset, ['https://github.com', 'https://gh-proxy.org/'], 50,
+    new AbortController().signal)
+  // standard origin keeps asset path; prefix origin concatenates the full asset URL
+  expect(urls).toEqual([
+    'https://github.com/k2-fsa/sherpa-onnx/releases/download/file.tar.bz2',
+    'https://gh-proxy.org/https://github.com/k2-fsa/sherpa-onnx/releases/download/file.tar.bz2',
+  ])
 })
 
 it('waits for body cleanup without changing the winning source', async () => {

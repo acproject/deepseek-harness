@@ -54,7 +54,7 @@ export const Config: z<Partial<Config>, Config> = z.object({
   threads: z.natural().min(1).default(2),
   modelOrigin: z.union([z.string().pattern(/^https?:\/\/[^/\s?#@]+\/?$/), z.const(undefined)]),
   modelOrigins: z.array(z.string().pattern(/^https?:\/\/[^/\s?#@]+\/?$/)).min(1)
-    .default(['https://github.com']),
+    .default(['https://github.com', 'https://gh-proxy.org/', 'https://ghfast.top/']),
   modelProbeTimeoutMs: z.natural().min(1).max(MAX_TIMER_DELAY_MS).default(3000),
   maxTextChars: z.natural().min(1).default(500),
   maxAudioBytes: z.natural().min(46).default(16 * 1024 * 1024),

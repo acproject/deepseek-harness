@@ -10,11 +10,21 @@ import { deadline } from '@deepseek-ai/dsh-timeout'
  * @param signal - preparation cancellation or deadline.
  * @returns deduplicated download URLs with the first responding source first; a single source needs no probe.
  */
+/**
+ * Build a concrete download URL for one origin.
+ * Origins ending in "/" are treated as prefixes (for reverse-proxy accelerators like gh-proxy),
+ * where the full assetUrl is appended. Other origins replace the asset URL's origin (Hugging Face mirrors,
+ * direct GitHub access).
+ */
+function constructUrl(assetUrl: string, origin: string): string {
+  if (origin.endsWith('/')) return origin + assetUrl
+  return new URL(new URL(assetUrl).pathname, origin).href
+}
+
 export async function orderModelSources(assetUrl: string, origins: readonly string[], timeoutMs: number,
   signal: AbortSignal): Promise<string[]> {
   signal.throwIfAborted()
-  const path = new URL(assetUrl).pathname
-  const urls = [...new Set(origins.map(origin => new URL(path, origin).href))]
+  const urls = [...new Set(origins.map(origin => constructUrl(assetUrl, origin)))]
   if (urls.length === 1) return urls
   const finished = new AbortController()
   using timeout = deadline(signal, timeoutMs, 'SPEECH_SOURCE_PROBE_TIMEOUT')

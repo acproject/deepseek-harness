@@ -65,7 +65,7 @@ it('keeps one worker warm across recordings and joins its exit on disposal', asy
 
 it('pins a manual source to one preparation without changing deployment defaults', async () => {
   const { worker } = await fixture()
-  expect(worker.downloadSources).toEqual(['https://huggingface.co', 'https://hf-mirror.com'])
+  expect(worker.downloadSources).toEqual(['https://hf-mirror.com', 'https://huggingface.co'])
   worker.prepare({ downloadSource: 'https://hf-mirror.com' })
   await vi.waitFor(() => { expect(worker.snapshot().phase).toBe('ready') })
   expect(prepareRuntime).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ modelOrigin: 'https://hf-mirror.com' }),

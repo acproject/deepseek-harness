@@ -197,7 +197,7 @@ it('reports the final source when every download fails', async () => {
   const { root, fetcher } = await fixture()
   fetcher.mockResolvedValue(new Response(null, { status: 503 }))
   await expect(prepareRuntime(new Context(), Config({ dataRoot: root }), new AbortController().signal)).rejects.toMatchObject({
-    download: { source: 'https://hf-mirror.com', reason: 'http', status: 503 },
+    download: { source: 'https://huggingface.co', reason: 'http', status: 503 },
   })
   expect(fetcher.mock.calls.filter(([, init]) => init?.method !== 'HEAD')).toHaveLength(2)
 })
