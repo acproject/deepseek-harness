@@ -12,13 +12,16 @@
     - id: text-to-speech
       name: '@deepseek-ai/dsh-experimental-text-to-speech'
       config:
-        defaultProvider: kokoro-local
-        defaultVoice: zf_xiaobei
+        defaultProvider: !!js process.platform === 'darwin' ? 'macos-say' : 'kokoro-local'
+        defaultVoice: !!js process.platform === 'darwin' ? 'Tingting (中文（中国大陆）)' : 'zf_xiaobei'
         language: auto
     - id: text-to-speech-kokoro
       name: '@deepseek-ai/dsh-experimental-text-to-speech-kokoro'
       config:
         dataRoot: !!js dshHomePath('text-to-speech', 'kokoro')
+    - id: text-to-speech-macos
+      name: '@deepseek-ai/dsh-experimental-text-to-speech-macos'
+      disabled: !!js process.platform !== 'darwin'
     - id: api-text-to-speech
       name: '@deepseek-ai/dsh-experimental-api-text-to-speech'
     - id: ui-voice-conversation

@@ -65,6 +65,7 @@
       "@deepseek-ai/dsh-experimental-text-to-speech": ["./packages/experimental/text-to-speech/src/index.ts"],
       "@deepseek-ai/dsh-experimental-text-to-speech/types": ["./packages/experimental/text-to-speech/src/types.ts"],
       "@deepseek-ai/dsh-experimental-text-to-speech-kokoro": ["./packages/experimental/text-to-speech-kokoro/src/index.ts"],
+      "@deepseek-ai/dsh-experimental-text-to-speech-macos": ["./packages/experimental/text-to-speech-macos/src/index.ts"],
       "@deepseek-ai/dsh-experimental-api-text-to-speech": ["./packages/experimental/api-text-to-speech/src/index.ts"],
       "@deepseek-ai/dsh-experimental-api-text-to-speech/types": ["./packages/experimental/api-text-to-speech/src/types.ts"],
       "@deepseek-ai/dsh-experimental-client-ui-voice-conversation": ["./packages/experimental/client-ui-voice-conversation/src/index.ts"],

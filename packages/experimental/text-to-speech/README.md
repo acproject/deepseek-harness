@@ -25,7 +25,7 @@ This Service Definition selects named speech synthesizers through `ctx.textToSpe
 <a id="use-this-package"></a>
 ## Use this package
 
-Load through the [voice conversation bundle](../voice-conversation-bundle/README.md), or compose the service with a provider and consumer. `defaultProvider` and `defaultVoice` are required and select an exact registered provider and voice; the bundle supplies `kokoro-local` and `zf_xiaobei`. `language` supplies the omitted language hint. A missing or duplicate provider, an unknown voice, or an unsupported language fails explicitly.
+Load through the [voice conversation bundle](../voice-conversation-bundle/README.md), or compose the service with a provider and consumer. `defaultProvider` and `defaultVoice` are required and select an exact registered provider and voice; the bundle supplies `macos-say` with `Tingting (中文（中国大陆）)` on darwin and `kokoro-local` with `zf_xiaobei` elsewhere. `language` supplies the omitted language hint. A missing or duplicate provider, an unknown voice, or an unsupported language fails explicitly.
 
 Providers advertise preparation origins through `downloadSources`. `prepare(id, options)` forwards an optional `downloadSource` for one task; the provider validates the choice and refuses source changes during active preparation. Omission retains provider policy. Source choices are not persisted synthesis preferences.
 

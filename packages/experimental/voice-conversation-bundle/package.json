@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-experimental-voice-conversation-bundle",
-  "description": "Experimental always-on voice conversation with local SenseVoice and Kokoro; downloads runtimes on first use",
+  "description": "Experimental always-on voice conversation with local SenseVoice, macOS system speech, and Kokoro; downloads runtimes on first use",
   "version": "0.2.1-alpha.3",
   "icon": "./icon.svg",
   "publishConfig": {
@@ -38,6 +38,7 @@
     "@deepseek-ai/dsh-experimental-api-speech-to-text": "workspace:*",
     "@deepseek-ai/dsh-experimental-text-to-speech": "workspace:*",
     "@deepseek-ai/dsh-experimental-text-to-speech-kokoro": "workspace:*",
+    "@deepseek-ai/dsh-experimental-text-to-speech-macos": "workspace:*",
     "@deepseek-ai/dsh-experimental-api-text-to-speech": "workspace:*",
     "@deepseek-ai/dsh-experimental-client-ui-voice-conversation": "workspace:*"
   },

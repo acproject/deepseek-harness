@@ -59,6 +59,12 @@ Promotion requires a named product role, documented public behavior and limitati
 | [`api-speech-to-text`](api-speech-to-text/README.md) | Authenticated transient transcription Remote | `ctx.speechController` |
 | [`client-ui-voice-input`](client-ui-voice-input/README.md) | Microphone capture and guarded draft insertion | — |
 | [`voice-input-bundle`](voice-input-bundle/README.md) | Default-disabled optional voice input composition | — |
+| [`text-to-speech`](text-to-speech/README.md) | Named speech synthesis providers | `ctx.textToSpeech` |
+| [`text-to-speech-kokoro`](text-to-speech-kokoro/README.md) | Managed local Kokoro inference | — |
+| [`text-to-speech-macos`](text-to-speech-macos/README.md) | macOS system speech through `say` | — |
+| [`api-text-to-speech`](api-text-to-speech/README.md) | Authenticated transient synthesis Remote | `ctx.ttsController` |
+| [`client-ui-voice-conversation`](client-ui-voice-conversation/README.md) | Always-on voice conversation loop and controls | — |
+| [`voice-conversation-bundle`](voice-conversation-bundle/README.md) | Default-disabled optional voice conversation composition | — |
 | [`agent-team-profile`](agent-team-profile/README.md) | Agent Teams collaboration, tools, and Web UI bundle | — |
 | [`agent-team`](agent-team/README.md) | Named teammates with direct messages and a durable shared task board | `ctx.agentTeams` |
 | [`client-ui-agent-team`](client-ui-agent-team/README.md) | Team roster, task board, and teammate navigation for Web | — |

@@ -129,7 +129,7 @@ function registerUi(ctx: Context): void {
         openSettings: () => { ctx.pluginNavigation.openBundle('@deepseek-ai/dsh-experimental-voice-conversation-bundle') },
         start: deviceId => controller.start(deviceId),
         stop: () => controller.stop(),
-        setMuted: muted => controller.setMuted(muted),
+        setMuted: (muted) => { controller.setMuted(muted) },
         release: async () => {
           await controller.dispose()
           controllers.delete(binding)

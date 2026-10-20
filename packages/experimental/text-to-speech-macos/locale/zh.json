@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "macOS 系统语音合成",
+    "description": "通过 macOS 内置 say 命令进行中英文语音合成。"
+  }
+}

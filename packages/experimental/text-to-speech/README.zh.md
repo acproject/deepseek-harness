@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-通过[语音对话 bundle](../voice-conversation-bundle/README.zh.md)加载，或自行组合服务、provider 与消费者。`defaultProvider` 与 `defaultVoice` 必填，分别精确选择已注册的 provider 与音色；bundle 提供 `kokoro-local` 与 `zf_xiaobei`。`language` 是调用方省略时使用的语言提示。provider 缺失或重复、音色未知、语言不受支持都会显式失败。
+通过[语音对话 bundle](../voice-conversation-bundle/README.zh.md)加载，或自行组合服务、provider 与消费者。`defaultProvider` 与 `defaultVoice` 必填，分别精确选择已注册的 provider 与音色；bundle 在 darwin 上提供 `macos-say` 与 `Tingting (中文（中国大陆）)`，其他平台提供 `kokoro-local` 与 `zf_xiaobei`。`language` 是调用方省略时使用的语言提示。provider 缺失或重复、音色未知、语言不受支持都会显式失败。
 
 provider 通过 `downloadSources` 声明准备下载源。`prepare(id, options)` 可为单次任务转发可选的 `downloadSource`；provider 会校验该选择，并拒绝在准备进行中切换来源。省略时沿用 provider 策略。来源选择不会持久化为合成偏好。
 

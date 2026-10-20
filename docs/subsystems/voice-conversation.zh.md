@@ -2,7 +2,7 @@
 
 [English](voice-conversation.md) | 中文
 
-实验性语音对话闭合语音链路：[合成服务定义](../../packages/experimental/text-to-speech/README.zh.md)路由具名语音合成 Provider，[Kokoro Provider](../../packages/experimental/text-to-speech-kokoro/README.zh.md)拥有本地合成，[Remote 消费者](../../packages/experimental/api-text-to-speech/README.zh.md)服务浏览器。[浏览器闭环](../../packages/experimental/client-ui-voice-conversation/README.zh.md)将它们与既有[识别栈](../../packages/experimental/speech-to-text/README.zh.md)及其 [SenseVoice 识别器](../../packages/experimental/speech-to-text-sensevoice/README.zh.md)配对；[可选 Bundle](../../packages/experimental/voice-conversation-bundle/README.zh.md)组合全部七个插件。识别遵循[语音输入](voice-input.zh.md)契约；本页只覆盖合成与常开对话闭环。
+实验性语音对话闭合语音链路：[合成服务定义](../../packages/experimental/text-to-speech/README.zh.md)路由具名语音合成 Provider，[Kokoro Provider](../../packages/experimental/text-to-speech-kokoro/README.zh.md)拥有本地合成，[macOS Provider](../../packages/experimental/text-to-speech-macos/README.zh.md)通过系统 `say` 命令朗读，[Remote 消费者](../../packages/experimental/api-text-to-speech/README.zh.md)服务浏览器。[浏览器闭环](../../packages/experimental/client-ui-voice-conversation/README.zh.md)将它们与既有[识别栈](../../packages/experimental/speech-to-text/README.zh.md)及其 [SenseVoice 识别器](../../packages/experimental/speech-to-text-sensevoice/README.zh.md)配对；[可选 Bundle](../../packages/experimental/voice-conversation-bundle/README.zh.md)组合全部八个插件。识别遵循[语音输入](voice-input.zh.md)契约；本页只覆盖合成与常开对话闭环。
 
 ## Provider 选择
 
@@ -22,7 +22,7 @@
 
 合成复用识别的准备词汇：`SynthesisPreparationState`、有序的 `SynthesisPreparationStep`、`SynthesisSetupEstimate`、`downloadSources` 和 `SynthesisDownloadFailure` 都是共享语音类型的别名。Kokoro Provider 在页面和 Session 变化期间拥有同一个准备任务，缓存根目录为独立的 `dshHomePath('text-to-speech', 'kokoro')`。Client 在活动入口、安装引导和 Bundle 详情之间共享一份识别与一份合成 `follow()` 订阅；载波失败只把镜像标记为断连，不改写最后一份目录。
 
-常开活动入口占用 `conversation.input.activity`，与按键说话的语音输入共享该槽；Bundle 只挂载一个客户端贡献。Bundle 详情占用以 Bundle id 为键的 `plugins.bundle.config` 和 `plugins.bundle.activation`，包含 Provider、语音、语言和麦克风偏好，以及准备状态和进度。所选麦克风保存在独立于语音输入插件的浏览器本地键中。Bundle 补丁默认 `kokoro-local` Provider、语音 `zf_xiaobei`、语言 `auto`；识别默认为 `sensevoice-local`。
+常开活动入口占用 `conversation.input.activity`，与按键说话的语音输入共享该槽；Bundle 只挂载一个客户端贡献。Bundle 详情占用以 Bundle id 为键的 `plugins.bundle.config` 和 `plugins.bundle.activation`，包含 Provider、语音、语言和麦克风偏好，以及准备状态和进度。所选麦克风保存在独立于语音输入插件的浏览器本地键中。Bundle 补丁在 darwin 上默认 `macos-say` Provider、语音 `Tingting (中文（中国大陆）)`，其他平台默认 `kokoro-local` Provider、语音 `zf_xiaobei`，语言均为 `auto`；识别默认为 `sensevoice-local`。
 
 ## 设计依据
 

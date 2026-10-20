@@ -55,6 +55,7 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/experimental/voice-input-bundle': { kind: 'none', reason: 'Composes dictation and preparation plugins without adding any model-facing contribution.' },
   'packages/experimental/text-to-speech': { kind: 'none', reason: 'Synthesizes completed assistant or client text into audio without adding model requests or Session events.' },
   'packages/experimental/text-to-speech-kokoro': { kind: 'none', reason: 'Local synthesis turns already-generated text into audio; it modifies neither model context nor Session events.' },
+  'packages/experimental/text-to-speech-macos': { kind: 'none', reason: 'System synthesis turns already-generated text into audio; it modifies neither model context nor Session events.' },
   'packages/experimental/api-text-to-speech': { kind: 'none', reason: 'Transports bounded text and returned audio; the ordinary assistant turn owns model-visible text.' },
   'packages/experimental/client-ui-voice-conversation': { kind: 'none', reason: 'The always-on loop keeps audio and transcripts outside model requests; ordinary conversation submission owns the user message.' },
   'packages/experimental/voice-conversation-bundle': { kind: 'none', reason: 'Composes recognition, synthesis and browser-loop plugins without adding any model-facing contribution.' },

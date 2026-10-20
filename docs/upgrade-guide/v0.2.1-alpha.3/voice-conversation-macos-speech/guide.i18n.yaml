@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-alpha.3/voice-conversation-macos-speech/guide.md
+/:
+  en: f72ffd54393f421b
+  zh: 0b8e4dd203db0ffb
+/voice-conversation-defaults-to-macos-system-speech-on-darwin:
+  en: 6bb0fc3939436ff7
+  zh: 16557ee46a1ac3fb
+/voice-conversation-defaults-to-macos-system-speech-on-darwin/change:
+  en: df314d34b55f0444
+  zh: df7e3f78b32045c5
+/voice-conversation-defaults-to-macos-system-speech-on-darwin/migration:
+  en: fe3c4c35d4fb3e1c
+  zh: 45dffd62ce352802

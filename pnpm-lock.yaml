@@ -9074,6 +9074,31 @@ importers:
         specifier: ^4.23.13
         version: 4.23.13
 
+  packages/experimental/text-to-speech-macos:
+    dependencies:
+      '@deepseek-ai/dsh-timeout':
+        specifier: workspace:*
+        version: link:../../util/timeout
+      '@deepseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-experimental-text-to-speech':
+        specifier: workspace:*
+        version: link:../text-to-speech
+      '@deepseek-ai/dsh-subprocess':
+        specifier: workspace:*
+        version: link:../../subprocess/subprocess
+      '@deepseek-ai/dsh-subprocess-local':
+        specifier: workspace:*
+        version: link:../../subprocess/subprocess-local
+      tsx:
+        specifier: ^4.23.13
+        version: 4.23.13
+
   packages/experimental/tool-agent-team:
     dependencies:
       '@deepseek-ai/schemastery':
@@ -9451,6 +9476,9 @@ importers:
       '@deepseek-ai/dsh-experimental-text-to-speech-kokoro':
         specifier: workspace:*
         version: link:../text-to-speech-kokoro
+      '@deepseek-ai/dsh-experimental-text-to-speech-macos':
+        specifier: workspace:*
+        version: link:../text-to-speech-macos
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: workspace:~

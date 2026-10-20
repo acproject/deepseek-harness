@@ -59,6 +59,12 @@ kind: "package-group"
 | [`api-speech-to-text`](api-speech-to-text/README.zh.md) | 带认证的临时转写 Remote | `ctx.speechController` |
 | [`client-ui-voice-input`](client-ui-voice-input/README.zh.md) | 麦克风录音与版本检查后的草稿插入 | — |
 | [`voice-input-bundle`](voice-input-bundle/README.zh.md) | 默认禁用的可选语音输入组合 | — |
+| [`text-to-speech`](text-to-speech/README.zh.md) | 具名语音合成提供方 | `ctx.textToSpeech` |
+| [`text-to-speech-kokoro`](text-to-speech-kokoro/README.zh.md) | 托管的本地 Kokoro 推理 | — |
+| [`text-to-speech-macos`](text-to-speech-macos/README.zh.md) | 通过 `say` 的 macOS 系统语音 | — |
+| [`api-text-to-speech`](api-text-to-speech/README.zh.md) | 鉴权的临时合成 Remote | `ctx.ttsController` |
+| [`client-ui-voice-conversation`](client-ui-voice-conversation/README.zh.md) | 常开语音对话循环与控制 | — |
+| [`voice-conversation-bundle`](voice-conversation-bundle/README.zh.md) | 默认禁用的可选语音对话组合 | — |
 | [`agent-team-profile`](agent-team-profile/README.zh.md) | Agent Teams 协作、工具与 Web UI 组合包 | — |
 | [`agent-team`](agent-team/README.zh.md) | 具名 teammate，成员之间直接消息与持久共享任务板 | `ctx.agentTeams` |
 | [`client-ui-agent-team`](client-ui-agent-team/README.zh.md) | Web Team roster、任务板与 teammate 导航 | — |
