@@ -239,7 +239,11 @@ export class PiAiAdapter extends LlmAdapter {
     const snapshot = this.current()
     this.modelOf(snapshot, provider, model)
     const profile = this.profileOf(snapshot, provider)
-    return requestImageTarget(image, { maxPixels: profile.requestImagePixelBudget, maxBytes: profile.requestImageMaxBytes })
+    return requestImageTarget(image, {
+      maxPixels: profile.requestImagePixelBudget,
+      maxBytes: profile.requestImageMaxBytes,
+      ...profile.requestImageMediaTypes === undefined ? {} : { mediaTypes: profile.requestImageMediaTypes },
+    })
   }
 
   /**
@@ -411,6 +415,7 @@ export class PiAiAdapter extends LlmAdapter {
           requestImagePolicy: {
             maxPixels: profile.requestImagePixelBudget,
             maxBytes: profile.requestImageMaxBytes,
+            ...profile.requestImageMediaTypes === undefined ? {} : { mediaTypes: profile.requestImageMediaTypes },
           },
         }, onReplayDegrade)
       const events = snapshot.models.streamSimple(model, context, {

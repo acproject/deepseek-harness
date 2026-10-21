@@ -81,11 +81,10 @@ describe('local request-image cache', () => {
     }
   })
 
-  it('passes through an in-budget attachment and composes ordered request reads', async () => {
+  it('encodes an in-budget attachment as PNG and composes ordered request reads', async () => {
     const attachments = await store()
     const first = await attachments.saveImage({ data: await image(8, 4), mediaType: 'image/png' })
     const second = await attachments.saveImage({ data: await image(4, 8), mediaType: 'image/png' })
-    const firstStored = await attachments.readImage(first)
     const policy = { width: 8, height: 8, maxBytes: 1024 * 1024 }
 
     const request = await attachments.readImageRequest(first, policy)
@@ -93,7 +92,9 @@ describe('local request-image cache', () => {
       attachment => attachments.readImageRequest(attachment, policy),
     ))
 
-    expect(request.data).toEqual(firstStored.data)
+    expect(request.mediaType).toBe('image/png')
+    expect(request.width).toBe(8)
+    expect(request.height).toBe(4)
     expect(batch.map(value => value.attachment.attachmentId)).toEqual([first.attachmentId, second.attachmentId])
   })
 
@@ -107,6 +108,10 @@ describe('local request-image cache', () => {
       .rejects.toThrow('Image request height must be a positive integer')
     await expect(attachments.readImageRequest(attachment, { width: 8, height: 4, maxBytes: 0 }))
       .rejects.toThrow('Image request maxBytes must be a positive integer')
+    await expect(attachments.readImageRequest(attachment, { width: 8, height: 4, maxBytes: 100, mediaTypes: [] }))
+      .rejects.toThrow('Image request mediaTypes must name at least one media type')
+    await expect(attachments.readImageRequest(attachment, { width: 8, height: 4, maxBytes: 100, mediaTypes: ['image/gif'] }))
+      .rejects.toThrow('Image request media type image/gif is not encodable')
   })
 
   it('resizes by the long edge to the exact target and keys the cache by target', async () => {
@@ -126,9 +131,8 @@ describe('local request-image cache', () => {
     const smaller = await attachments.readImageRequest(square, { width: 1024, height: 1024, maxBytes })
     const enlarged = await attachments.readImageRequest(thin, { width: 9000, height: 45, maxBytes })
 
-    expect(squareRequest).toMatchObject({ width: 1302, height: 1302, mediaType: 'image/jpeg' })
+    expect(squareRequest).toMatchObject({ width: 1302, height: 1302, mediaType: 'image/png' })
     expect(smallRequest).toMatchObject({ width: 800, height: 800, mediaType: 'image/png' })
-    expect(smallRequest.data).toEqual((await attachments.readImage(small)).data)
     expect(thinRequest).toMatchObject({ width: 4096, height: 20 })
     expect(wideRequest).toMatchObject({ width: 1708, height: 961 })
     expect(tallRequest).toMatchObject({ width: 961, height: 1708 })
@@ -153,7 +157,7 @@ describe('local request-image cache', () => {
 
     const request = await attachments.readImageRequest(attachment, { width: 1, height: 1, maxBytes: 1 })
 
-    expect(request.mediaType).toBe('image/jpeg')
+    expect(request.mediaType).toBe('image/png')
     expect(request.bytes).toBeGreaterThan(1)
     expect(request).toMatchObject({ width: 1, height: 1 })
   })
@@ -225,7 +229,7 @@ describe('local request-image cache', () => {
     expect(low.width * low.height).toBeLessThanOrEqual(512 * 512 + low.width)
   })
 
-  it('routes opaque pixels to JPEG and preserves alpha on the WebP ladder', async () => {
+  it('encodes opaque pixels as PNG and preserves alpha through the WebP fallback', async () => {
     const attachments = await store()
     const side = 256
     const photoPixels = new Uint8Array(side * side * 3)
@@ -257,11 +261,70 @@ describe('local request-image cache', () => {
     const photoRequest = await attachments.readImageRequest(photo, { width: 128, height: 128, maxBytes: 1024 * 1024 })
     const alphaRequest = await attachments.readImageRequest(alpha, { width: 128, height: 128, maxBytes: 4_096 })
 
-    expect(photoRequest.mediaType).toBe('image/jpeg')
+    expect(photoRequest.mediaType).toBe('image/png')
     expect(alphaRequest.mediaType).toBe('image/webp')
     expect(alphaRequest.bytes).toBeGreaterThan(4_096)
     expect(alphaRequest).toMatchObject({ width: 128, height: 128 })
     await expect(sharp(alphaRequest.data).metadata()).resolves.toMatchObject({ hasAlpha: true, depth: 'uchar', space: 'srgb' })
+  })
+
+  it('excludes WebP from constrained targets and flattens alpha only when the budget forces JPEG', async () => {
+    const attachments = await store()
+    const side = 128
+    const alphaPixels = new Uint8Array(side * side * 4)
+    let state = 0x2545f491
+    for (let pixel = 0; pixel < side * side; pixel += 1) {
+      state ^= state << 13
+      state ^= state >>> 17
+      state ^= state << 5
+      const alpha = pixel * 4
+      alphaPixels[alpha] = state & 0xff
+      alphaPixels[alpha + 1] = state >> 8 & 0xff
+      alphaPixels[alpha + 2] = state >> 16 & 0xff
+      alphaPixels[alpha + 3] = pixel & 0xff
+    }
+    const alphaSource = new Uint8Array(await sharp(alphaPixels, {
+      raw: { width: side, height: side, channels: 4 },
+    }).png().toBuffer())
+    const alpha = await attachments.saveImage({ data: alphaSource, mediaType: 'image/png' })
+    const noWebp = { width: 128, height: 128, mediaTypes: ['image/png', 'image/jpeg'] as const }
+
+    const fitted = await attachments.readImageRequest(alpha, { ...noWebp, maxBytes: 1024 * 1024 })
+    const flattened = await attachments.readImageRequest(alpha, { ...noWebp, maxBytes: 4_096 })
+
+    expect(fitted.mediaType).toBe('image/png')
+    await expect(sharp(fitted.data).metadata()).resolves.toMatchObject({ hasAlpha: true })
+    expect(flattened.mediaType).toBe('image/jpeg')
+    expect(flattened.bytes).toBeGreaterThan(4_096)
+    await expect(sharp(flattened.data).metadata()).resolves.toMatchObject({ hasAlpha: false })
+  })
+
+  it('encodes an opaque source as WebP when JPEG is excluded', async () => {
+    const attachments = await store()
+    const attachment = await attachments.saveImage({ data: await image(64, 32), mediaType: 'image/png' })
+
+    const request = await attachments.readImageRequest(attachment, {
+      width: 64, height: 32, maxBytes: 1024, mediaTypes: ['image/webp'],
+    })
+
+    expect(request.mediaType).toBe('image/webp')
+  })
+
+  it('separates constrained and unconstrained targets in the cache key', async () => {
+    const attachments = await store()
+    const attachment = await attachments.saveImage({
+      data: await complexOpaqueAlphaImage(64, 32), mediaType: 'image/png',
+    })
+    const base = { width: 22, height: 11, maxBytes: 1024 * 1024 }
+
+    const unconstrained = await attachments.readImageRequest(attachment, base)
+    const constrained = await attachments.readImageRequest(attachment, {
+      ...base, mediaTypes: ['image/png', 'image/jpeg'],
+    })
+
+    expect(unconstrained.variantId).not.toBe(constrained.variantId)
+    expect(unconstrained.mediaType).toBe('image/png')
+    expect(constrained.mediaType).toBe('image/png')
   })
 
   it.each([3, 4] as const)('projects a 16-bit %s-channel PNG as a bounded 8-bit request image', async (channels) => {
@@ -285,7 +348,9 @@ describe('local request-image cache', () => {
     const source = await complexOpaqueAlphaImage(64, 32)
     const attachment = await attachments.saveImage({ data: source, mediaType: 'image/png' })
 
-    const request = await attachments.readImageRequest(attachment, { width: 22, height: 11, maxBytes: 1024 * 1024 })
+    const request = await attachments.readImageRequest(attachment, {
+      width: 22, height: 11, maxBytes: 1024 * 1024, mediaTypes: ['image/webp'],
+    })
 
     expect(request.mediaType).toBe('image/webp')
     await expect(sharp(request.data).metadata()).resolves.toMatchObject({ hasAlpha: false })

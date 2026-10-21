@@ -13,8 +13,16 @@
 `AttachmentId` 是带类型标记的不透明字符串。本地后端目前生成 `sha256:<digest>`，但消费方既不能解析这种表示，也不能据此派生文件系统路径。消费方可以通过 `imageHostPath()` 询问附件提供方所持对象的位置，然后必须由当前执行文件系统判断模型工具能否读取该宿主路径。
 
 ```ts type-equiv
+/**
+ * Media types the request-image path can encode as deterministic request
+ * versions; GIF is admitted for storage but never re-encoded into a request.
+ */
+type EncodableImageMediaType = 'image/png' | 'image/jpeg' | 'image/webp'
+```
+
+```ts type-equiv
 /** Raster image formats accepted by the version-one attachment path. */
-type ImageMediaType = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif'
+type ImageMediaType = EncodableImageMediaType | 'image/gif'
 ```
 
 ```ts type-equiv
@@ -134,6 +142,13 @@ interface ImageRequestTarget {
   height: number
   /** Encoded-byte target before base64 expansion or Files API upload; the smallest quality-ladder output is kept when no quality fits. */
   maxBytes: number
+  /**
+   * Encoded output media types the request variant may use; omission allows the
+   * store's full encodable set. A set without `image/webp` never emits WebP, so
+   * backends that cannot decode WebP (for example llama.cpp servers) receive
+   * only PNG or JPEG bytes.
+   */
+  mediaTypes?: readonly ImageMediaType[]
 }
 ```
 

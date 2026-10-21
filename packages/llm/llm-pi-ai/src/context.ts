@@ -11,6 +11,7 @@ import type {
   AttachmentId,
   AttachmentStore,
   ImageAttachmentRef,
+  ImageMediaType,
   ImageRequestTarget,
   RequestImageAttachment,
 } from '@deepseek-ai/dsh-attachment'
@@ -274,16 +275,22 @@ export interface PiImageRequestBudget {
   maxPixels: number
   /** Encoded-byte target for one request image. */
   maxBytes: number
+  /** Encoded output media types the request variant may use; omission allows all. */
+  mediaTypes?: readonly ImageMediaType[]
 }
 
 /**
  * Resolve the request target for one source under the route budgets.
  * @param ref - normalized source image.
- * @param budget - resolved route pixel and byte limits.
- * @returns dimensions and byte target shared by serialization and screenshot coordinate mapping.
+ * @param budget - resolved route pixel, byte, and media-type limits.
+ * @returns dimensions, byte target, and optional media-type constraint shared by serialization and screenshot coordinate mapping.
  */
 export function requestImageTarget(ref: ImageAttachmentRef, budget: PiImageRequestBudget): ImageRequestTarget {
-  return { ...requestImageDimensions(ref.width, ref.height, budget.maxPixels), maxBytes: budget.maxBytes }
+  return {
+    ...requestImageDimensions(ref.width, ref.height, budget.maxPixels),
+    maxBytes: budget.maxBytes,
+    ...budget.mediaTypes === undefined ? {} : { mediaTypes: budget.mediaTypes },
+  }
 }
 
 /**

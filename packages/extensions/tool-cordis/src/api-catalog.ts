@@ -5507,6 +5507,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface EditGoalRequest {\n    readonly objective?: string;\n    readonly maxGoalRounds?: number;\n}',
   },
   {
+    name: 'EncodableImageMediaType',
+    declaration: 'export type EncodableImageMediaType = \'image/png\' | \'image/jpeg\' | \'image/webp\';',
+  },
+  {
     name: 'EncodedFileAttachment',
     declaration: 'export interface EncodedFileAttachment {\n    data: string;\n    name?: string;\n}',
   },
@@ -5728,11 +5732,11 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'ImageMediaType',
-    declaration: 'export type ImageMediaType = \'image/png\' | \'image/jpeg\' | \'image/webp\' | \'image/gif\';',
+    declaration: 'export type ImageMediaType = EncodableImageMediaType | \'image/gif\';',
   },
   {
     name: 'ImageRequestTarget',
-    declaration: 'export interface ImageRequestTarget {\n    width: number;\n    height: number;\n    maxBytes: number;\n}',
+    declaration: 'export interface ImageRequestTarget {\n    width: number;\n    height: number;\n    maxBytes: number;\n    mediaTypes?: readonly ImageMediaType[];\n}',
   },
   {
     name: 'ImageVariantId',

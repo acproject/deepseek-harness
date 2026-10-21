@@ -13,8 +13,16 @@ Source: [`packages/attachment/attachment/src/types.ts`](../../packages/attachmen
 `AttachmentId` is a branded opaque string. The local backend currently emits `sha256:<digest>`, but consumers must neither parse that representation nor derive a filesystem path from it. A consumer may ask the attachment provider for its object location through `imageHostPath()`, then must use the current execution filesystem to decide whether model tools can read that host path.
 
 ```ts type-equiv
+/**
+ * Media types the request-image path can encode as deterministic request
+ * versions; GIF is admitted for storage but never re-encoded into a request.
+ */
+type EncodableImageMediaType = 'image/png' | 'image/jpeg' | 'image/webp'
+```
+
+```ts type-equiv
 /** Raster image formats accepted by the version-one attachment path. */
-type ImageMediaType = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif'
+type ImageMediaType = EncodableImageMediaType | 'image/gif'
 ```
 
 ```ts type-equiv
@@ -134,6 +142,13 @@ interface ImageRequestTarget {
   height: number
   /** Encoded-byte target before base64 expansion or Files API upload; the smallest quality-ladder output is kept when no quality fits. */
   maxBytes: number
+  /**
+   * Encoded output media types the request variant may use; omission allows the
+   * store's full encodable set. A set without `image/webp` never emits WebP, so
+   * backends that cannot decode WebP (for example llama.cpp servers) receive
+   * only PNG or JPEG bytes.
+   */
+  mediaTypes?: readonly ImageMediaType[]
 }
 ```
 

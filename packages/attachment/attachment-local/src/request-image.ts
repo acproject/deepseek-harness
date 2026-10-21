@@ -13,17 +13,22 @@ import type {
   StoredImageAttachment,
 } from '@deepseek-ai/dsh-attachment'
 import {
+  FLATTEN_BACKGROUND,
   IMAGE_ENCODING_QUALITIES,
+  PNG_COMPRESSION_LEVEL,
   WEBP_ENCODING_EFFORT,
   encodeFirstWithinLimit,
-  encodingLadder,
+  requestEncodingLadder,
   isExhaustedEncoding,
 } from './encoding.ts'
 import { detectImage, encodedAlphaIsCompatible, probeImage } from './image.ts'
 import { requireSharp } from './sharp.ts'
 
 /** Transform version included in every cache and upload-index identity. */
-export const REQUEST_IMAGE_TRANSFORM_VERSION = 'request-image-v6'
+export const REQUEST_IMAGE_TRANSFORM_VERSION = 'request-image-v7'
+
+/** Encoded output media types the request ladder can produce. */
+const ENCODABLE_MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const
 
 interface EncodedRequestImage {
   data: Uint8Array
@@ -51,6 +56,16 @@ function validateTarget(target: ImageRequestTarget): void {
   checkedInteger(target.width, 'Image request width')
   checkedInteger(target.height, 'Image request height')
   checkedInteger(target.maxBytes, 'Image request maxBytes')
+  const { mediaTypes } = target
+  if (mediaTypes === undefined) return
+  if (mediaTypes.length === 0) {
+    throw new AttachmentError('Image request mediaTypes must name at least one media type.', 'INVALID_ATTACHMENT_REF')
+  }
+  for (const mediaType of mediaTypes) {
+    if (!(ENCODABLE_MEDIA_TYPES as readonly string[]).includes(mediaType)) {
+      throw new AttachmentError(`Image request media type ${mediaType} is not encodable.`, 'INVALID_ATTACHMENT_REF')
+    }
+  }
 }
 
 function descriptor(attachment: ImageAttachmentRef, target: ImageRequestTarget): string {
@@ -61,10 +76,12 @@ function descriptor(attachment: ImageAttachmentRef, target: ImageRequestTarget):
     targetHeight: target.height,
     encodedByteBudget: target.maxBytes,
     encoding: {
+      allowedMediaTypes: target.mediaTypes === undefined ? null : [...target.mediaTypes].sort(),
+      pngCompressionLevel: PNG_COMPRESSION_LEVEL,
       webpQualities: IMAGE_ENCODING_QUALITIES,
       webpEffort: WEBP_ENCODING_EFFORT,
       jpegQualities: IMAGE_ENCODING_QUALITIES,
-      order: ['alpha:webp', 'opaque:jpeg'],
+      flattenBackground: FLATTEN_BACKGROUND,
       colourspace: 'srgb',
     },
   })
@@ -100,21 +117,23 @@ async function createRequestImage(
   target: ImageRequestTarget,
   hasAlpha: boolean,
 ): Promise<EncodedRequestImage> {
-  if (target.width >= attachment.ref.width
-    && target.height >= attachment.ref.height
-    && attachment.data.byteLength <= target.maxBytes) {
-    return {
-      data: attachment.data,
-      mediaType: attachment.ref.mediaType,
-      width: attachment.ref.width,
-      height: attachment.ref.height,
-    }
-  }
   const encodedVersion = await encodeFirstWithinLimit(
-    encodingLadder(pipeline(attachment, target), hasAlpha),
+    requestEncodingLadder(pipeline(attachment, target), hasAlpha, target.mediaTypes),
     target.maxBytes,
   )
   return isExhaustedEncoding(encodedVersion) ? encodedVersion.smallest : encodedVersion
+}
+
+/**
+ * Whether the ladder for this target may emit an opaque JPEG for an alpha
+ * source: only the flatten-JPEG fallback drops alpha, and it exists exactly
+ * when WebP is excluded while JPEG is allowed.
+ */
+function alphaMayDrop(target: ImageRequestTarget, sourceHasAlpha: boolean): boolean {
+  return sourceHasAlpha
+    && target.mediaTypes !== undefined
+    && !target.mediaTypes.includes('image/webp')
+    && target.mediaTypes.includes('image/jpeg')
 }
 
 function cachePath(root: string, hash: string): string {
@@ -132,7 +151,8 @@ async function readCached(
     const detected = await probeImage(data)
     if (detected.depth !== 'uchar' || detected.space !== 'srgb'
       || detected.width > target.width || detected.height > target.height
-      || !encodedAlphaIsCompatible(expectedAlpha, detected)) return undefined
+      || (target.mediaTypes !== undefined && !target.mediaTypes.includes(detected.mediaType))
+      || !encodedAlphaIsCompatible(expectedAlpha, detected, alphaMayDrop(target, expectedAlpha))) return undefined
     return { data, mediaType: detected.mediaType, width: detected.width, height: detected.height, hasAlpha: detected.hasAlpha }
   } catch (error: unknown) {
     if ((error as NodeJS.ErrnoException | null)?.code === 'ENOENT') return undefined
@@ -144,11 +164,13 @@ async function readCached(
 async function verifyRequestImage(
   image: EncodedRequestImage,
   expectedAlpha: boolean,
+  allowAlphaDrop: boolean,
 ): Promise<VerifiedRequestImage> {
   const detected = await detectImage(image.data)
   if (detected.depth !== 'uchar' || detected.space !== 'srgb'
     || detected.width !== image.width || detected.height !== image.height
-    || detected.mediaType !== image.mediaType || !encodedAlphaIsCompatible(expectedAlpha, detected)) {
+    || detected.mediaType !== image.mediaType
+    || !encodedAlphaIsCompatible(expectedAlpha, detected, allowAlphaDrop)) {
     throw new AttachmentError(
       'Encoded model-request image does not match its verified 8-bit sRGB metadata.',
       'ATTACHMENT_WRITE_FAILED',
@@ -190,11 +212,9 @@ export async function readRequestImageFile(
   const path = cachePath(root, hash)
   const cached = await readCached(path, target, source.hasAlpha, signal)
   const created = cached ?? await createRequestImage(attachment, target, source.hasAlpha)
-  const version = cached ?? (created.data === attachment.data
-    ? { ...created, hasAlpha: source.hasAlpha }
-    : await verifyRequestImage(created, source.hasAlpha))
+  const version = cached ?? await verifyRequestImage(created, source.hasAlpha, alphaMayDrop(target, source.hasAlpha))
   signal?.throwIfAborted()
-  if (cached === undefined && version.data !== attachment.data) await writeCached(path, version.data)
+  if (cached === undefined) await writeCached(path, version.data)
   return {
     variantId,
     attachment: attachment.ref,

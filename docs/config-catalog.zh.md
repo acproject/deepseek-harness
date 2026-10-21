@@ -1352,6 +1352,43 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-experimental-text-to-speech-kokoro -->
 
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-experimental-text-to-speech-macos -->
+<a id="deepseek-aidsh-experimental-text-to-speech-macos"></a>
+
+## `@deepseek-ai/dsh-experimental-text-to-speech-macos`
+
+- `inject`: `textToSpeech` · `subprocess`
+- `source`: [`packages/experimental/text-to-speech-macos/src/config.ts:6`](../packages/experimental/text-to-speech-macos/src/config.ts)
+
+```ts config-catalog
+/** Local `say` runtime and synthesis settings. */
+export interface Config {
+  /** Unique registration id; consumers select this exact id. */
+  providerId: string
+  /** Executable invoked for the voice catalog and synthesis; an absolute path overrides PATH lookup. */
+  command: string
+  /** Primary locale subtags selecting catalog voices, for example `zh` and `en`. */
+  locales: string[]
+  /** Speaking rate in words per minute; omission keeps each voice's native rate. */
+  rateWpm?: number | undefined
+  /** Output sample rate in hertz requested from `say`. */
+  sampleRate: number
+  /** Maximum request text length measured in Unicode code points. */
+  maxTextChars: number
+  /** Maximum produced WAV bytes accepted from one synthesis. */
+  maxAudioBytes: number
+  /** Deadline for reading the voice catalog at activation. */
+  voiceListTimeoutMs: number
+  /** Deadline for one synthesis request. */
+  synthesisTimeoutMs: number
+  /** Managed process termination grace period. */
+  graceMs: number
+  /** Maximum retained `say` diagnostic bytes. */
+  maxLogBytes: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-experimental-text-to-speech-macos -->
+
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-experimental-tool-agent-team -->
 <a id="deepseek-aidsh-experimental-tool-agent-team"></a>
 
@@ -1867,8 +1904,8 @@ export interface Config extends ProtocolConfig {
 ## `@deepseek-ai/dsh-llm-pi-ai`
 
 - `inject`: `llm`
-- `refs`: `Api` (`@earendil-works/pi-ai`) · `CacheRetention` (`@earendil-works/pi-ai`) · `Model` (`@earendil-works/pi-ai`) · `ModelThinkingLevel` (`@earendil-works/pi-ai`) · `OpenAICompletionsCompat` (`@earendil-works/pi-ai`) · [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · `ThinkingBudgets` (`@earendil-works/pi-ai`) · `Transport` (`@earendil-works/pi-ai`) · `Volatile` (`@deepseek-ai/cordis`)
-- `source`: [`packages/llm/llm-pi-ai/src/config.ts:222`](../packages/llm/llm-pi-ai/src/config.ts)
+- `refs`: `Api` (`@earendil-works/pi-ai`) · `CacheRetention` (`@earendil-works/pi-ai`) · [`EncodableImageMediaType`](../packages/attachment/attachment/src/index.ts) · `Model` (`@earendil-works/pi-ai`) · `ModelThinkingLevel` (`@earendil-works/pi-ai`) · `OpenAICompletionsCompat` (`@earendil-works/pi-ai`) · [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · `ThinkingBudgets` (`@earendil-works/pi-ai`) · `Transport` (`@earendil-works/pi-ai`) · `Volatile` (`@deepseek-ai/cordis`)
+- `source`: [`packages/llm/llm-pi-ai/src/config.ts:230`](../packages/llm/llm-pi-ai/src/config.ts)
 
 ```ts config-catalog
 /** Plugin configuration: the provider routes this instance owns. */
@@ -1971,6 +2008,13 @@ export interface PiAiProviderProfile {
    * the smallest quality-ladder output is used when no quality fits.
    */
   requestImageMaxBytes?: number
+  /**
+   * Encoded media types allowed in model-request images for this route;
+   * omission allows the full encodable set (PNG first, then WebP or JPEG).
+   * Configure a set without `image/webp` for backends that cannot decode
+   * WebP, such as llama.cpp servers.
+   */
+  requestImageMediaTypes?: EncodableImageMediaType[]
   /** Provider-owned model-request retry policy; omission uses normal mode with five retries. */
   retryPolicy?: RetryPolicyConfig
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { ImageMediaType } from '@deepseek-ai/dsh-attachment'
 import { assertServiceable, Config, resolveProfiles, type Options } from '../src/config.ts'
 
 /** Validate one hand-declared route, with the caller's fields layered onto it. */
@@ -105,5 +106,49 @@ describe('request image policy bounds', () => {
     expect(() => {
       assertServiceable(programmatic)
     }).toThrow(message)
+  })
+})
+
+describe('request image media types', () => {
+  it('rejects a media type the request ladder cannot encode', () => {
+    expect(routeWith({ requestImageMediaTypes: ['image/gif'] })).toThrow()
+    // The first call proves the schema rejects the write; this one proves
+    // resolution still fails loud for a value that reached it unvalidated.
+    expect(() => {
+      assertServiceable({ providers: {
+        'acme-gateway': {
+          api: 'openai-completions',
+          baseURL: 'https://acme.test',
+          models: [{ id: 'm' }],
+          requestImageMediaTypes: ['image/gif' as ImageMediaType],
+        },
+      } } as Options)
+    }).toThrow(/requestImageMediaTypes entry image\/gif is not an encodable image media type/)
+  })
+
+  it('carries a declared constraint and reads an absent or empty one as unconstrained', () => {
+    const profiles = resolveProfiles({
+      constrained: {
+        api: 'openai-completions',
+        baseURL: 'https://constrained.test',
+        models: [{ id: 'm' }],
+        requestImageMediaTypes: ['image/png', 'image/jpeg'],
+      },
+      empty: {
+        api: 'openai-completions',
+        baseURL: 'https://empty.test',
+        models: [{ id: 'm' }],
+        requestImageMediaTypes: [],
+      },
+      absent: {
+        api: 'openai-completions',
+        baseURL: 'https://absent.test',
+        models: [{ id: 'm' }],
+      },
+    })
+
+    expect(profiles.get('constrained')?.requestImageMediaTypes).toEqual(['image/png', 'image/jpeg'])
+    expect(profiles.get('empty')?.requestImageMediaTypes).toBeUndefined()
+    expect(profiles.get('absent')?.requestImageMediaTypes).toBeUndefined()
   })
 })

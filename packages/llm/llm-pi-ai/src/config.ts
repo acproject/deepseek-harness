@@ -13,6 +13,7 @@
  * @module dsh-llm-pi-ai/config
  */
 import type { Volatile } from '@deepseek-ai/cordis'
+import type { EncodableImageMediaType } from '@deepseek-ai/dsh-attachment'
 
 import type { CacheRetention, ChatTemplateKwargValue, ModelThinkingLevel, Provider, ThinkingBudgets, Transport } from '@earendil-works/pi-ai'
 import z from '@deepseek-ai/schemastery'
@@ -178,6 +179,13 @@ export interface PiAiProviderProfile {
    * the smallest quality-ladder output is used when no quality fits.
    */
   requestImageMaxBytes?: number
+  /**
+   * Encoded media types allowed in model-request images for this route;
+   * omission allows the full encodable set (PNG first, then WebP or JPEG).
+   * Configure a set without `image/webp` for backends that cannot decode
+   * WebP, such as llama.cpp servers.
+   */
+  requestImageMediaTypes?: EncodableImageMediaType[]
   /** Provider-owned model-request retry policy; omission uses normal mode with five retries. */
   retryPolicy?: RetryPolicyConfig
 }
@@ -345,6 +353,7 @@ const profile = z.object({
   maxRequestImageBytes: z.number().step(1).min(1).default(DEFAULT_MAX_REQUEST_IMAGE_BYTES),
   requestImagePixelBudget: z.number().step(1).min(1).default(DEFAULT_REQUEST_IMAGE_PIXEL_BUDGET),
   requestImageMaxBytes: z.number().step(1).min(1).default(DEFAULT_REQUEST_IMAGE_MAX_BYTES),
+  requestImageMediaTypes: z.array(z.union(['image/png', 'image/jpeg', 'image/webp'])),
   retryPolicy: RetryPolicySchema,
 })
 
@@ -446,6 +455,21 @@ export function resolveProfiles(
     if (!Number.isSafeInteger(requestImageMaxBytes) || requestImageMaxBytes <= 0) {
       throw new Error(`llm-pi-ai: provider "${provider}" requestImageMaxBytes must be a positive safe integer`)
     }
+    // Schemastery materializes an absent array as [], so an empty or absent
+    // list both read as "no constraint" and keep the full encodable set.
+    const requestImageMediaTypes = source.requestImageMediaTypes === undefined
+      || source.requestImageMediaTypes.length === 0
+      ? undefined
+      : [...source.requestImageMediaTypes]
+    if (requestImageMediaTypes !== undefined) {
+      for (const mediaType of requestImageMediaTypes) {
+        if (mediaType !== 'image/png' && mediaType !== 'image/jpeg' && mediaType !== 'image/webp') {
+          throw new Error(
+            `llm-pi-ai: provider "${provider}" requestImageMediaTypes entry ${mediaType} is not an encodable image media type`,
+          )
+        }
+      }
+    }
     // Detached from the configuration object because pi-ai types `Model.input`
     // mutable. The schema's explicit default covers an absent key, so an empty
     // list here is always one someone typed — and unlike an entry's, nothing
@@ -487,7 +511,7 @@ export function resolveProfiles(
       if (validation === 'strict' || !(error instanceof PiAiCatalogError)) throw error
       catalogError ??= error.message
     }
-    const { apiKeyEnv, retryPolicy, models: _models, displayName: _displayName, ...rest } = source
+    const { apiKeyEnv, retryPolicy, models: _models, displayName: _displayName, requestImageMediaTypes: _raw, ...rest } = source
     resolved.set(provider, {
       ...rest,
       provider,
@@ -497,6 +521,7 @@ export function resolveProfiles(
       maxRequestImageBytes,
       requestImagePixelBudget,
       requestImageMaxBytes,
+      ...requestImageMediaTypes === undefined ? {} : { requestImageMediaTypes },
       retryPolicy: resolveRetryPolicy(retryPolicy, `llm-pi-ai: provider "${provider}" retryPolicy`),
       ...rest.headers === undefined ? {} : { headers: { ...rest.headers } },
       ...rest.thinkingBudgets === undefined ? {} : { thinkingBudgets: { ...rest.thinkingBudgets } },

@@ -28,6 +28,7 @@ export type {
   AttachmentId as AttachmentIdType,
   AdmittedPromptContentPart,
   AttachmentAdmissionPart,
+  EncodableImageMediaType,
   EncodedFileAttachment,
   EncodedImageAttachment,
   FileAttachmentRef,

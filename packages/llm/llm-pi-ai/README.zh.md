@@ -47,6 +47,9 @@ kind: "package-reference"
         reasoning: high
         requestImagePixelBudget: 4194304 # total pixels; 2048 by 2048 default
         requestImageMaxBytes: 1048576    # raw bytes before base64 expansion
+        requestImageMediaTypes:          # omit to allow PNG, WebP, and JPEG
+          - image/png
+          - image/jpeg
         maxRequestImageBytes: 20971520   # accumulated base64 payload
         retryPolicy:
           mode: normal
@@ -85,6 +88,7 @@ kind: "package-reference"
 | `defaultMaxTokens` | `32,768` | 未描述模型的输出上限回退 |
 | `requestImagePixelBudget` | `4,194,304` | 每张确定性请求图片的总像素预算 |
 | `requestImageMaxBytes` | `1 MiB` | 每张请求图片在 base64 扩展前的编码字节目标 |
+| `requestImageMediaTypes` | 全部可编码类型 | 请求图片允许的编码输出媒体类型；不含 `image/webp` 的集合可服务 llama.cpp 等无法解码 WebP 的后端 |
 | `maxRequestImageBytes` | `20 MiB` | base64 图片载荷总上限，保留图片超过时请求以 `IMAGE_OFFLOAD_REQUIRED` 失败 |
 | `retryPolicy` | normal，5 次重试 | 由 `dsh-llm-retry` 执行的提供方自有重试策略 |
 

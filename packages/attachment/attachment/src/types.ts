@@ -4,8 +4,14 @@ import type { AttachmentId, ImageVariantId } from './brand.ts'
 
 export type { AttachmentId } from './brand.ts'
 
+/**
+ * Media types the request-image path can encode as deterministic request
+ * versions; GIF is admitted for storage but never re-encoded into a request.
+ */
+export type EncodableImageMediaType = 'image/png' | 'image/jpeg' | 'image/webp'
+
 /** Raster image formats accepted by the version-one attachment path. */
-export type ImageMediaType = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif'
+export type ImageMediaType = EncodableImageMediaType | 'image/gif'
 
 /** Durable, serializable reference to one immutable normalized image. */
 export interface ImageAttachmentRef {
@@ -140,6 +146,13 @@ export interface ImageRequestTarget {
   height: number
   /** Encoded-byte target before base64 expansion or Files API upload; the smallest quality-ladder output is kept when no quality fits. */
   maxBytes: number
+  /**
+   * Encoded output media types the request variant may use; omission allows the
+   * store's full encodable set. A set without `image/webp` never emits WebP, so
+   * backends that cannot decode WebP (for example llama.cpp servers) receive
+   * only PNG or JPEG bytes.
+   */
+  mediaTypes?: readonly ImageMediaType[]
 }
 
 /** Cached request version derived from one provider-independent normalized attachment. */
