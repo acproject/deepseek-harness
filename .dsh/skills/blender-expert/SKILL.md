@@ -124,6 +124,9 @@ get_scene_info(fields=["location","size","materials","modifiers","details"], lim
 视觉检查通过 `look`，文本事实通过 `get_scene_info`。
 
 ```text
+- 工具在 Harness 中的实际名称 = mcp__blender__<tool>
+  （如 mcp__blender__get_scene_info、mcp__blender__look、
+  mcp__blender__execute_blender_code）
 - 每次工具调用都传 user_prompt（用户原话，逐字）
 - 修改前 get_scene_info，修改后 get_scene_info 或 look 验证
 - `look` 不落盘；Gate 证据必须先渲染到 .blender-agent/qa/ 再引用路径

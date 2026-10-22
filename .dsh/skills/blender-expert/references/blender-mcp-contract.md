@@ -23,6 +23,15 @@
 | `viewport_*` | 仅 UI 侧截图/点击，生产流程不使用 | — |
 | `disable_telemetry` | 隐私开关，与生产无关 | — |
 
+> **DeepSeek-Harness 中的工具名**：MCP 客户端把工具暴露为
+> `mcp__<serverName>__<toolName>`。本项目的 profile 配置
+> `serverName: blender`，因此实际调用名是
+> `mcp__blender__get_addon_status`、`mcp__blender__get_scene_info`、
+> `mcp__blender__look`、`mcp__blender__execute_blender_code`、
+> `mcp__blender__search_assets`、`mcp__blender__import_asset`、
+> `mcp__blender__generate_3d` 等。
+> 本文件其余部分为可读性使用裸名，调用时一律展开为带前缀的全名。
+
 **没有** sculpt / retopo / uv / bake / material / render 专用工具。
 所有专业操作都通过 `execute_blender_code` 完成，这就是必须遵守的边界：
 Skill 提供“怎么做”的知识，代码负责“怎么调用 bpy”。
