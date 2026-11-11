@@ -18,6 +18,16 @@ it('routes the exact successful attempt to its registered machine', () => {
     .toMatchObject({ runId: '42', attempt: '2', runnerLabel: 'dsh-mini', preset: 'test' })
 })
 
+it.each(['test', 'production'])('explains how to rebuild debugging packages for %s', (preset) => {
+  for (const [qualification, remedy] of [['unsigned', 'signing=signed'], ['unnotarized', '取消勾选“跳过公证”']]) {
+    const f = fixture()
+    f.source.preset = preset
+    f.source.qualification = qualification!
+    expect(() => resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, f.routes)).toThrow(remedy)
+    expect(() => resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, f.routes)).toThrow('重跑当前发布任务无效')
+  }
+})
+
 it.each(['attempt', 'repository', 'commit', 'mode', 'runner', 'workflow'] as const)('rejects mismatched %s evidence', (field) => {
   const f = fixture()
   if (field === 'attempt') f.source.attempt = '1'
@@ -35,7 +45,6 @@ it('fails closed when a publishing route or its unique label is missing', () => 
   const duplicates = { ...f.routes, laptop: { label: 'dsh-mini', target: 'mac-arm64' } }
   expect(() => resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, duplicates)).toThrow(/unique runner label/u)
 })
-
 
 it('keeps the packaged source separate from the workflow commit', () => {
   const f = fixture()
@@ -55,4 +64,44 @@ it('ignores unrelated successful jobs on the packaging machine', () => {
   const f = fixture()
   f.jobs.push({ ...f.jobs[0]!, name: 'diagnostics' })
   expect(resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, f.routes)).toMatchObject({ runnerName: 'mini' })
+})
+
+it('allows repository branch packages for test but rejects them for production', () => {
+  const f = fixture()
+  f.source.sourceRef = 'feature/desktop-update'
+  expect(resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, f.routes))
+    .toMatchObject({ sourceRef: f.source.sourceRef, preset: 'test' })
+  f.source.preset = 'production'
+  expect(() => resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, f.routes)).toThrow(/Production source/u)
+})
+
+it('matches Intel artifacts to the Intel workflow on a machine serving both architectures', () => {
+  const f = fixture()
+  f.source.target = 'mac-x64'
+  const routes = { mini: { label: 'dsh-mini', target: ['mac-arm64', 'mac-x64'] } }
+  expect(() => resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, routes)).toThrow(/does not match/u)
+  f.run.path = '.github/workflows/macos-intel-package.yml'
+  expect(resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, routes))
+    .toMatchObject({ target: 'mac-x64', runnerLabel: 'dsh-mini' })
+  expect(() => resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, f.routes)).toThrow(/no configured/u)
+  f.source.target = 'mac-arm64'
+  expect(() => resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, routes)).toThrow(/does not match/u)
+})
+
+it('accepts a successful package when the attempt failed during archival', () => {
+  const f = fixture()
+  f.run.conclusion = 'failure'
+  f.jobs.push({ ...f.jobs[0]!, name: 'upload-artifact', conclusion: 'failure' })
+  expect(resolveDesktopPublishRoute('owner/repo', f.run, { source: f.source }, f.jobs, f.routes))
+    .toMatchObject({ runId: '42', attempt: '2' })
+})
+
+it.each([null, undefined])('routes from successful package evidence without a run conclusion (%s)', (conclusion) => {
+  const f = fixture()
+  const run = { ...f.run, conclusion }
+  expect(resolveDesktopPublishRoute('owner/repo', run, { source: f.source }, f.jobs, f.routes))
+    .toMatchObject({ runId: '42', attempt: '2', runnerLabel: 'dsh-mini' })
+  f.jobs[0]!.conclusion = 'failure'
+  expect(() => resolveDesktopPublishRoute('owner/repo', run, { source: f.source }, f.jobs, f.routes))
+    .toThrow('single successful packaging runner')
 })
